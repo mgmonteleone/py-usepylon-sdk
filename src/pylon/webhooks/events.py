@@ -34,7 +34,9 @@ class BaseIssueEvent(BaseModel):
     issue_account_id: str = Field(description="Account ID")
     issue_account_name: str = Field(description="Account name")
     issue_requester_email: str = Field(description="Requester email")
-    issue_requesteer_id: str = Field(description="Requester ID (note: Pylon spelling)")
+    issue_requesteer_id: str = Field(
+        description="Requester ID (NOTE: intentional double 'ee' - matches Pylon's actual webhook payload spelling)"
+    )
     issue_assignee_email: str = Field(description="Assignee email")
     issue_assignee_id: str = Field(description="Assignee ID")
     issue_salesforce_account_id: str | None = Field(

@@ -6,22 +6,20 @@ This SDK provides:
 - Type-safe models for all Pylon API entities
 - Comprehensive exception handling
 - Webhook event parsing and validation
-- Support for both sync and async operations (async coming in Phase 2)
+- Support for both sync and async operations (coming in future phases)
 
-Example:
-    from pylon import PylonClient
-    from pylon.exceptions import PylonNotFoundError
+Note:
+    Phase 1 includes models, exceptions, and webhook support.
+    The PylonClient for making API calls will be available in a future release.
 
-    client = PylonClient(api_key="your_api_key")
+Example - Working with models:
+    from pylon.models import PylonIssue
 
-    try:
-        issues = list(client.issues.list(days=7))
-        for issue in issues:
-            print(f"#{issue.number}: {issue.title}")
-    except PylonNotFoundError:
-        print("Issue not found")
+    issue_data = {"id": "issue_123", "number": 42, "title": "Test", ...}
+    issue = PylonIssue.from_pylon_dict(issue_data)
+    print(f"#{issue.number}: {issue.title}")
 
-For webhook handling:
+Example - Webhook handling:
     from pylon.webhooks import parse_webhook_event, IssueNewEvent
 
     event = parse_webhook_event(payload)

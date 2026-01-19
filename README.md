@@ -23,19 +23,23 @@ uv add py-usepylon-sdk
 
 ## Quick Start
 
+> **Note**: Phase 1 of this SDK includes models, exceptions, and webhook support. The `PylonClient` for making API calls will be available in a future release.
+
+### Working with Models
+
 ```python
-from pylon import PylonClient
-from pylon.exceptions import PylonNotFoundError
+from pylon.models import PylonIssue, PylonUser
 
-# Initialize the client
-client = PylonClient(api_key="your_api_key")
-
-# Or use environment variable PYLON_API_KEY
-client = PylonClient()
-
-# List issues from the last 7 days
-for issue in client.issues.list(days=7):
-    print(f"#{issue.number}: {issue.title}")
+# Parse API response data into type-safe models
+issue_data = {
+    "id": "issue_123",
+    "number": 42,
+    "title": "Example Issue",
+    "status": "open",
+    # ... other fields
+}
+issue = PylonIssue.from_pylon_dict(issue_data)
+print(f"#{issue.number}: {issue.title}")
 ```
 
 ## Webhook Handling
@@ -53,23 +57,26 @@ if isinstance(event, IssueNewEvent):
 ## Exception Handling
 
 ```python
-from pylon import PylonClient
 from pylon.exceptions import (
+    PylonAPIError,
     PylonAuthenticationError,
     PylonNotFoundError,
     PylonRateLimitError,
+    PylonValidationError,
 )
 
-client = PylonClient(api_key="...")
+# All Pylon exceptions inherit from PylonError
+# Use them to handle different error scenarios when the client is available
 
-try:
-    issue = client.issues.get("nonexistent_id")
-except PylonNotFoundError as e:
-    print(f"Issue not found: {e.message}")
-except PylonAuthenticationError:
-    print("Invalid API key")
-except PylonRateLimitError as e:
-    print(f"Rate limited. Retry after {e.retry_after} seconds")
+# Example exception usage (when client is implemented):
+# try:
+#     issue = client.issues.get("nonexistent_id")
+# except PylonNotFoundError as e:
+#     print(f"Issue not found: {e.message}")
+# except PylonAuthenticationError:
+#     print("Invalid API key")
+# except PylonRateLimitError as e:
+#     print(f"Rate limited. Retry after {e.retry_after} seconds")
 ```
 
 ## Development
