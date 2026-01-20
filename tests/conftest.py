@@ -1,6 +1,5 @@
 """Shared pytest fixtures for Pylon SDK tests."""
 
-from datetime import datetime
 from typing import Any
 
 import pytest

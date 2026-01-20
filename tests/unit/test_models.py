@@ -1,6 +1,7 @@
 """Unit tests for Pydantic models."""
 
 import pytest
+from pydantic import ValidationError
 
 from pylon.models import (
     PylonAuditLog,
@@ -34,7 +35,7 @@ class TestPylonReference:
     def test_is_frozen(self):
         """Should be immutable."""
         ref = PylonReference(id="abc123")
-        with pytest.raises(Exception):  # ValidationError for frozen
+        with pytest.raises(ValidationError):  # ValidationError for frozen
             ref.id = "xyz"  # type: ignore[misc]
 
 

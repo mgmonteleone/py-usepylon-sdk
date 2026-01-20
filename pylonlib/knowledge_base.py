@@ -7,29 +7,30 @@ tools to parse and export knowledge base content from Markdown files.
 
 Usage:
     from pylonlib.knowledge_base import KnowledgeArticle, parse_faq_markdown, export_to_json
-    
+
     # Parse FAQ markdown file
     articles = parse_faq_markdown('reference/FAQ.md')
-    
+
     # Export to JSON
     export_to_json(articles, 'knowledge_base.json')
-    
+
     # Export to CSV
     export_to_csv(articles, 'knowledge_base.csv')
 """
 
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
-from datetime import datetime
 import re
+from datetime import datetime
+from typing import Any
+
 import markdown
 from bs4 import BeautifulSoup
+from pydantic import BaseModel, Field
 
 
 class KnowledgeArticle(BaseModel):
     """
     Represents a knowledge base article.
-    
+
     Attributes:
         title: Article title (usually the question)
         category: Article category (from H1/H2 headings)
@@ -45,26 +46,26 @@ class KnowledgeArticle(BaseModel):
         created_at: When the article was created (if available)
         updated_at: When the article was last updated (if available)
     """
-    
+
     title: str
     category: str
-    subcategory: Optional[str] = None
+    subcategory: str | None = None
     question: str
     answer_markdown: str
     answer_html: str
     answer_plain: str
-    tags: List[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
     is_internal_only: bool = False
     is_incomplete: bool = False
     url_name: str
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat() if v else None
         }
-    
+
     @staticmethod
     def markdown_to_html(md_text: str) -> str:
         """Convert Markdown to HTML."""
@@ -78,13 +79,13 @@ class KnowledgeArticle(BaseModel):
             link['target'] = '_blank'
             link['rel'] = 'noopener noreferrer'
         return str(soup)
-    
+
     @staticmethod
     def html_to_plain(html_text: str) -> str:
         """Convert HTML to plain text."""
         soup = BeautifulSoup(html_text, 'html.parser')
         return soup.get_text(separator=' ', strip=True)
-    
+
     @staticmethod
     def generate_url_name(title: str) -> str:
         """Generate URL-friendly name from title."""
@@ -93,7 +94,7 @@ class KnowledgeArticle(BaseModel):
         url_name = re.sub(r'[\s_]+', '-', url_name)
         url_name = url_name.strip('-')
         return url_name[:255]  # Limit to 255 chars
-    
+
     @classmethod
     def from_markdown(
         cls,
@@ -101,14 +102,14 @@ class KnowledgeArticle(BaseModel):
         question: str,
         answer_markdown: str,
         category: str,
-        subcategory: Optional[str] = None,
+        subcategory: str | None = None,
         is_internal_only: bool = False,
         is_incomplete: bool = False,
-        tags: Optional[List[str]] = None
+        tags: list[str] | None = None
     ) -> "KnowledgeArticle":
         """
         Create a KnowledgeArticle from Markdown content.
-        
+
         Args:
             title: Article title
             question: The question being answered
@@ -118,14 +119,14 @@ class KnowledgeArticle(BaseModel):
             is_internal_only: Whether article is internal only
             is_incomplete: Whether article is incomplete
             tags: List of tags
-        
+
         Returns:
             KnowledgeArticle instance
         """
         answer_html = cls.markdown_to_html(answer_markdown)
         answer_plain = cls.html_to_plain(answer_html)
         url_name = cls.generate_url_name(title)
-        
+
         return cls(
             title=title,
             category=category,
@@ -139,12 +140,12 @@ class KnowledgeArticle(BaseModel):
             is_incomplete=is_incomplete,
             url_name=url_name
         )
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return self.model_dump()
-    
-    def to_salesforce_dict(self) -> Dict[str, Any]:
+
+    def to_salesforce_dict(self) -> dict[str, Any]:
         """
         Convert to Salesforce Knowledge__kav format.
 
@@ -164,7 +165,7 @@ class KnowledgeArticle(BaseModel):
         }
 
 
-def parse_faq_markdown(file_path: str) -> List[KnowledgeArticle]:
+def parse_faq_markdown(file_path: str) -> list[KnowledgeArticle]:
     """
     Parse a FAQ Markdown file and extract knowledge articles.
 
@@ -187,7 +188,7 @@ def parse_faq_markdown(file_path: str) -> List[KnowledgeArticle]:
     """
     articles = []
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding='utf-8') as f:
         content = f.read()
 
     # Split by H1 headings (categories)
@@ -250,7 +251,7 @@ def parse_faq_markdown(file_path: str) -> List[KnowledgeArticle]:
     return articles
 
 
-def export_to_json(articles: List[KnowledgeArticle], output_path: str, indent: int = 2) -> None:
+def export_to_json(articles: list[KnowledgeArticle], output_path: str, indent: int = 2) -> None:
     """
     Export articles to JSON format.
 
@@ -273,7 +274,7 @@ def export_to_json(articles: List[KnowledgeArticle], output_path: str, indent: i
     print(f'✅ Exported {len(articles)} articles to {output_path}')
 
 
-def export_to_csv(articles: List[KnowledgeArticle], output_path: str) -> None:
+def export_to_csv(articles: list[KnowledgeArticle], output_path: str) -> None:
     """
     Export articles to CSV format.
 
@@ -307,7 +308,7 @@ def export_to_csv(articles: List[KnowledgeArticle], output_path: str) -> None:
     print(f'✅ Exported {len(articles)} articles to {output_path}')
 
 
-def export_to_html(articles: List[KnowledgeArticle], output_path: str, title: str = "Knowledge Base") -> None:
+def export_to_html(articles: list[KnowledgeArticle], output_path: str, title: str = "Knowledge Base") -> None:
     """
     Export articles to a single HTML file.
 
@@ -458,7 +459,7 @@ def export_to_html(articles: List[KnowledgeArticle], output_path: str, title: st
     ]
 
     # Group articles by category
-    categories: Dict[str, List[KnowledgeArticle]] = {}
+    categories: dict[str, list[KnowledgeArticle]] = {}
     for article in articles:
         if article.category not in categories:
             categories[article.category] = []
@@ -505,7 +506,7 @@ def export_to_html(articles: List[KnowledgeArticle], output_path: str, title: st
     print(f'✅ Exported {len(articles)} articles to {output_path}')
 
 
-def get_statistics(articles: List[KnowledgeArticle]) -> Dict[str, Any]:
+def get_statistics(articles: list[KnowledgeArticle]) -> dict[str, Any]:
     """
     Get statistics about the knowledge base articles.
 
@@ -515,8 +516,8 @@ def get_statistics(articles: List[KnowledgeArticle]) -> Dict[str, Any]:
     Returns:
         Dictionary with statistics
     """
-    categories: Dict[str, int] = {}
-    tags: Dict[str, int] = {}
+    categories: dict[str, int] = {}
+    tags: dict[str, int] = {}
     internal_count = 0
     incomplete_count = 0
 

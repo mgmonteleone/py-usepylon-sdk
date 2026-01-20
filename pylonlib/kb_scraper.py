@@ -8,13 +8,13 @@ and merges them with collection metadata from the Pylon API.
 Since Pylon's API doesn't support reading articles, we use web scraping to get the content.
 """
 
-from typing import List, Dict, Optional
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
-import requests
-from pydantic import BaseModel
-from datetime import datetime
 import time
+from datetime import datetime
+
+import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
+from pydantic import BaseModel
 
 
 class ScrapedArticle(BaseModel):
@@ -23,12 +23,12 @@ class ScrapedArticle(BaseModel):
     title: str
     body_html: str
     body_text: str
-    collection_id: Optional[str] = None
-    collection_title: Optional[str] = None
-    slug: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    
+    collection_id: str | None = None
+    collection_title: str | None = None
+    slug: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
     class Config:
         json_encoders = {
             datetime: lambda v: v.isoformat() if v else None
@@ -38,14 +38,14 @@ class ScrapedArticle(BaseModel):
 class PylonKBScraper:
     """
     Scraper for Pylon Knowledge Base
-    
+
     Combines API metadata with web-scraped article content.
     """
-    
+
     def __init__(self, api_key: str, kb_base_url: str = "https://support.augmentcode.com"):
         """
         Initialize the scraper
-        
+
         Args:
             api_key: Pylon API key
             kb_base_url: Base URL of the knowledge base (default: https://support.augmentcode.com)
@@ -53,106 +53,106 @@ class PylonKBScraper:
         self.api_key = api_key
         self.kb_base_url = kb_base_url.rstrip('/')
         self.kb_id = '405c5b71-bfd3-4ad6-9d65-d915546452c7'  # Augment Code KB ID
-        
-    def get_collections_from_api(self) -> List[Dict]:
+
+    def get_collections_from_api(self) -> list[dict]:
         """Get collections from Pylon API"""
         headers = {
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json'
         }
-        
+
         response = requests.get(
             f'https://api.usepylon.com/knowledge-bases/{self.kb_id}/collections',
             headers=headers
         )
-        
+
         if response.status_code == 200:
             return response.json().get('data', [])
         else:
             raise Exception(f"Failed to get collections: {response.status_code} - {response.text}")
-    
-    def scrape_homepage(self) -> Dict[str, List[Dict]]:
+
+    def scrape_homepage(self) -> dict[str, list[dict]]:
         """
         Scrape the knowledge base homepage to find collection and article links
-        
+
         Returns:
             Dict with 'collections' and 'articles' lists
         """
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
-            
+
             try:
                 page.goto(self.kb_base_url, wait_until='domcontentloaded', timeout=60000)
                 page.wait_for_timeout(5000)  # Wait for JS to render
-                
+
                 html = page.content()
             finally:
                 browser.close()
-            
+
             soup = BeautifulSoup(html, 'html.parser')
             links = soup.find_all('a', href=True)
-            
+
             article_links = []
             collection_links = []
-            
+
             for link in links:
                 href = link.get('href', '')
                 text = link.get_text(strip=True)
-                
+
                 if not text:  # Skip empty links
                     continue
-                
+
                 if '/articles/' in href or '/a/' in href:
                     full_url = href if href.startswith('http') else f'{self.kb_base_url}{href}'
                     article_links.append({'title': text, 'url': full_url})
                 elif '/collections/' in href or '/c/' in href:
                     full_url = href if href.startswith('http') else f'{self.kb_base_url}{href}'
                     collection_links.append({'title': text, 'url': full_url})
-            
+
             return {
                 'collections': collection_links,
                 'articles': article_links
             }
-    
-    def scrape_collection(self, collection_url: str) -> List[Dict]:
+
+    def scrape_collection(self, collection_url: str) -> list[dict]:
         """
         Scrape a collection page to find all articles in that collection
-        
+
         Args:
             collection_url: URL of the collection page
-            
+
         Returns:
             List of article dicts with 'title' and 'url'
         """
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
-            
+
             try:
                 page.goto(collection_url, wait_until='domcontentloaded', timeout=60000)
                 page.wait_for_timeout(3000)
-                
+
                 html = page.content()
             finally:
                 browser.close()
-            
+
             soup = BeautifulSoup(html, 'html.parser')
             links = soup.find_all('a', href=True)
-            
+
             articles = []
             for link in links:
                 href = link.get('href', '')
                 text = link.get_text(strip=True)
-                
+
                 if text and ('/articles/' in href or '/a/' in href):
                     full_url = href if href.startswith('http') else f'{self.kb_base_url}{href}'
                     articles.append({'title': text, 'url': full_url})
-            
+
             return articles
 
-    def scrape_article(self, url: str, collection_id: Optional[str] = None,
-                      collection_title: Optional[str] = None) -> ScrapedArticle:
+    def scrape_article(self, url: str, collection_id: str | None = None,
+                      collection_title: str | None = None) -> ScrapedArticle:
         """
         Scrape a single article
 
@@ -207,7 +207,7 @@ class PylonKBScraper:
                 slug=slug
             )
 
-    def scrape_all_articles(self, delay_seconds: float = 1.0) -> List[ScrapedArticle]:
+    def scrape_all_articles(self, delay_seconds: float = 1.0) -> list[ScrapedArticle]:
         """
         Scrape all articles from the knowledge base
 
@@ -283,7 +283,7 @@ class PylonKBScraper:
         return scraped_articles
 
 
-def export_to_json(articles: List[ScrapedArticle], output_file: str) -> None:
+def export_to_json(articles: list[ScrapedArticle], output_file: str) -> None:
     """Export scraped articles to JSON"""
     import json
 
@@ -299,7 +299,7 @@ def export_to_json(articles: List[ScrapedArticle], output_file: str) -> None:
     print(f"✅ Exported {len(articles)} articles to {output_file}")
 
 
-def export_to_csv(articles: List[ScrapedArticle], output_file: str) -> None:
+def export_to_csv(articles: list[ScrapedArticle], output_file: str) -> None:
     """Export scraped articles to CSV"""
     import csv
 
@@ -324,7 +324,7 @@ def export_to_csv(articles: List[ScrapedArticle], output_file: str) -> None:
     print(f"✅ Exported {len(articles)} articles to {output_file}")
 
 
-def export_to_html(articles: List[ScrapedArticle], output_file: str, title: str = "Knowledge Base Articles") -> None:
+def export_to_html(articles: list[ScrapedArticle], output_file: str, title: str = "Knowledge Base Articles") -> None:
     """Export scraped articles to a single HTML file"""
 
     # Group by collection

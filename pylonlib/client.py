@@ -5,22 +5,29 @@ This module provides a client for interacting with the Pylon API.
 """
 
 import os
-import requests
 import time
+from collections.abc import Iterator
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any, Iterator
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from typing import Any
+
+import requests
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from .models import (
+    PylonAccount,
+    PylonAttachment,
+    PylonContact,
     PylonIssue,
     PylonMessage,
-    PylonTag,
-    PylonAttachment,
-    PylonAccount,
-    PylonContact,
-    PylonUser,
-    PylonTeam,
     PylonResponse,
+    PylonTag,
+    PylonTeam,
+    PylonUser,
 )
 
 
@@ -37,7 +44,7 @@ class PylonRateLimitError(PylonAPIError):
 class PylonClient:
     """
     Client for interacting with the Pylon API.
-    
+
     This client provides methods to retrieve data from Pylon including:
     - Issues (support tickets/conversations)
     - Messages (comments on issues)
@@ -47,36 +54,36 @@ class PylonClient:
     - Contacts (read-only for matching)
     - Users (read-only for matching)
     - Teams (read-only for matching)
-    
+
     Example:
         client = PylonClient(api_key="your_api_key")
         issues = list(client.get_issues(days=30))
     """
-    
+
     BASE_URL = "https://api.usepylon.com"
-    
-    def __init__(self, api_key: Optional[str] = None, timeout: float = 30.0):
+
+    def __init__(self, api_key: str | None = None, timeout: float = 30.0):
         """
         Initialize the Pylon client.
-        
+
         Args:
             api_key: Pylon API key. If not provided, will look for PYLON_API_KEY env var.
             timeout: Timeout in seconds for HTTP requests to the Pylon API.
-        
+
         Raises:
             ValueError: If no API key is provided or found in environment.
         """
         self.api_key = api_key or os.getenv('PYLON_API_KEY')
         if not self.api_key:
             raise ValueError("Pylon API key must be provided or set in PYLON_API_KEY environment variable")
-        
+
         self.session = requests.Session()
         self.timeout = timeout
         self.session.headers.update({
             'Authorization': f'Bearer {self.api_key}',
             'Content-Type': 'application/json'
         })
-    
+
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_exponential(multiplier=2, min=4, max=60),
@@ -85,10 +92,10 @@ class PylonClient:
     def _make_request(
         self,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
         method: str = 'GET',
-        data: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        data: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Make a request to the Pylon API with retry logic.
 
         Args:
@@ -121,8 +128,8 @@ class PylonClient:
             raise PylonAPIError(error_msg)
 
         return response.json()
-    
-    def _paginate(self, endpoint: str, params: Optional[Dict[str, Any]] = None, delay: float = 0.5) -> Iterator[Dict[str, Any]]:
+
+    def _paginate(self, endpoint: str, params: dict[str, Any] | None = None, delay: float = 0.5) -> Iterator[dict[str, Any]]:
         """
         Paginate through API results using cursor-based pagination.
 
@@ -147,8 +154,7 @@ class PylonClient:
             response = PylonResponse(**response_data)
 
             # Yield each item in the data array
-            for item in response.data:
-                yield item
+            yield from response.data
 
             # Check if there are more pages
             if not response.pagination or not response.pagination.has_next_page:
@@ -159,13 +165,13 @@ class PylonClient:
             # Add delay between requests to avoid rate limiting
             if delay > 0:
                 time.sleep(delay)
-    
+
     def get_issues(
         self,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        days: Optional[int] = None,
-        limit: Optional[int] = None
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        days: int | None = None,
+        limit: int | None = None
     ) -> Iterator[PylonIssue]:
         """
         Get issues from Pylon.
@@ -205,7 +211,7 @@ class PylonClient:
         for item in self._paginate('/issues', params):
             yield PylonIssue.from_pylon_dict(item)
 
-    def get_issue_by_number(self, number: int) -> Optional[PylonIssue]:
+    def get_issue_by_number(self, number: int) -> PylonIssue | None:
         """Fetch a single issue by its ticket number.
 
         Uses the GET /issues/{id} endpoint which accepts either an issue ID
@@ -234,9 +240,9 @@ class PylonClient:
     def search_issues_by_account(
         self,
         account_id: str,
-        limit: Optional[int] = None,
-        start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
+        limit: int | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
     ) -> Iterator[PylonIssue]:
         """Search for issues associated with a specific Pylon account.
 
@@ -325,25 +331,25 @@ class PylonClient:
                 if 'data' in response:
                     for item in response['data']:
                         yield PylonIssue.from_pylon_dict(item)
-    
-    def get_tags(self, limit: Optional[int] = None) -> Iterator[PylonTag]:
+
+    def get_tags(self, limit: int | None = None) -> Iterator[PylonTag]:
         """
         Get tags from Pylon.
-        
+
         Args:
             limit: Maximum number of tags to retrieve per page
-        
+
         Yields:
             PylonTag objects
         """
         params = {}
         if limit:
             params['limit'] = limit
-        
+
         for item in self._paginate('/tags', params):
             yield PylonTag.from_pylon_dict(item)
-    
-    def get_accounts(self, limit: Optional[int] = None) -> Iterator[PylonAccount]:
+
+    def get_accounts(self, limit: int | None = None) -> Iterator[PylonAccount]:
         """
         Get accounts from Pylon (read-only for matching).
 
@@ -425,8 +431,8 @@ class PylonClient:
                 if 'data' in response:
                     for item in response['data']:
                         yield PylonAccount.from_pylon_dict(item)
-    
-    def get_contacts(self, limit: Optional[int] = None) -> Iterator[PylonContact]:
+
+    def get_contacts(self, limit: int | None = None) -> Iterator[PylonContact]:
         """
         Get contacts from Pylon (read-only for matching).
 
@@ -461,8 +467,8 @@ class PylonClient:
         if 'data' in response:
             return PylonContact.from_pylon_dict(response['data'])
         return PylonContact.from_pylon_dict(response)
-    
-    def get_users(self, limit: Optional[int] = None) -> Iterator[PylonUser]:
+
+    def get_users(self, limit: int | None = None) -> Iterator[PylonUser]:
         """
         Get users from Pylon (read-only for matching).
 
@@ -500,24 +506,24 @@ class PylonClient:
             return PylonUser.from_pylon_dict(response['data'])
         return PylonUser.from_pylon_dict(response)
 
-    def get_teams(self, limit: Optional[int] = None) -> Iterator[PylonTeam]:
+    def get_teams(self, limit: int | None = None) -> Iterator[PylonTeam]:
         """
         Get teams from Pylon (read-only for matching).
-        
+
         Args:
             limit: Maximum number of teams to retrieve per page
-        
+
         Yields:
             PylonTeam objects
         """
         params = {}
         if limit:
             params['limit'] = limit
-        
+
         for item in self._paginate('/teams', params):
             yield PylonTeam.from_pylon_dict(item)
-    
-    def get_messages(self, issue_id: str, limit: Optional[int] = None) -> List[PylonMessage]:
+
+    def get_messages(self, issue_id: str, limit: int | None = None) -> list[PylonMessage]:
         """
         Get messages for a specific issue.
 
@@ -564,7 +570,7 @@ class PylonClient:
         data = response.get("data", response)
         return PylonIssue.from_pylon_dict(data)
 
-    def update_issue(self, issue_id: str, payload: Dict[str, Any]) -> PylonIssue:
+    def update_issue(self, issue_id: str, payload: dict[str, Any]) -> PylonIssue:
         """Update an issue via Pylon's PATCH /issues/{id} endpoint.
 
         Callers are responsible for constructing a payload that matches the
@@ -592,32 +598,32 @@ class PylonClient:
         # Pylon API docs; fall back to top-level JSON for robustness.
         data = response.get('data', response)
         return PylonIssue.from_pylon_dict(data)
-    
-    def get_attachments(self, issue_id: str) -> List[PylonAttachment]:
+
+    def get_attachments(self, issue_id: str) -> list[PylonAttachment]:
         """
         Get attachments for a specific issue.
-        
+
         Note: This endpoint structure is not yet confirmed.
         May need to be updated based on actual API behavior.
-        
+
         Args:
             issue_id: The Pylon issue ID
-        
+
         Returns:
             List of PylonAttachment objects
         """
         # TODO: Verify the correct endpoint for attachments
         # Possible endpoints: /issues/{id}/attachments or /attachments?issue_id={id}
         raise NotImplementedError("Attachments endpoint structure not yet confirmed")
-    
+
     def close(self):
         """Close the HTTP session."""
         self.session.close()
-    
+
     def __enter__(self):
         """Context manager entry."""
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()

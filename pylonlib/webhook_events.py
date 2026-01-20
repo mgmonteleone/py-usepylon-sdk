@@ -10,7 +10,7 @@ names used by Pylon.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Dict, List, Optional, Union, Literal, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, TypeAdapter
 
@@ -35,7 +35,7 @@ class BaseIssueEvent(BaseModel):
     issue_requesteer_id: str  # sic: matches Pylon payload spelling
     issue_assignee_email: str
     issue_assignee_id: str
-    issue_salesforce_account_id: Optional[str] = None
+    issue_salesforce_account_id: str | None = None
 
 
 class IssueSnapshotEvent(BaseIssueEvent):
@@ -50,15 +50,15 @@ class IssueSnapshotEvent(BaseIssueEvent):
     issue_sf_type: str
     issue_last_message_sent_at: datetime
     issue_link: str
-    issue_tags: List[str] = Field(default_factory=list)
-    issue_account_domains: List[str] = Field(default_factory=list)
-    issue_attachment_urls: List[str] = Field(default_factory=list)
-    issue_custom_field_feature_mentioned: Optional[str] = None
-    issue_custom_field_ide_mentioned: Optional[str] = None
-    issue_custom_field_priority: Optional[str] = None
-    issue_custom_field_question_type: Optional[str] = None
-    issue_custom_field_request_id_if_applicable: Optional[str] = None
-    issue_custom_field_salesforce_issue_id: Optional[str] = None
+    issue_tags: list[str] = Field(default_factory=list)
+    issue_account_domains: list[str] = Field(default_factory=list)
+    issue_attachment_urls: list[str] = Field(default_factory=list)
+    issue_custom_field_feature_mentioned: str | None = None
+    issue_custom_field_ide_mentioned: str | None = None
+    issue_custom_field_priority: str | None = None
+    issue_custom_field_question_type: str | None = None
+    issue_custom_field_request_id_if_applicable: str | None = None
+    issue_custom_field_salesforce_issue_id: str | None = None
 
 
 class IssueNewEvent(IssueSnapshotEvent):
@@ -110,21 +110,13 @@ class IssueMessageNewEvent(BaseIssueEvent):
     message_author_id: str
     message_author_name: str
     message_body_html: str
-    message_ccs: List[str] = Field(default_factory=list)
+    message_ccs: list[str] = Field(default_factory=list)
     message_is_private: bool
     message_sent_at: datetime
 
 
 PylonWebhookEvent = Annotated[
-    Union[
-        IssueNewEvent,
-        IssueAssignedEvent,
-        IssueFieldChangedEvent,
-        IssueStatusChangedEvent,
-        IssueTagsChangedEvent,
-        IssueReactionEvent,
-        IssueMessageNewEvent,
-    ],
+    IssueNewEvent | IssueAssignedEvent | IssueFieldChangedEvent | IssueStatusChangedEvent | IssueTagsChangedEvent | IssueReactionEvent | IssueMessageNewEvent,
     Field(discriminator="event_type"),
 ]
 
@@ -132,7 +124,7 @@ PylonWebhookEvent = Annotated[
 _PYLON_WEBHOOK_EVENT_ADAPTER: TypeAdapter[PylonWebhookEvent] = TypeAdapter(PylonWebhookEvent)
 
 
-def parse_webhook_event(payload: Dict[str, Any]) -> PylonWebhookEvent:
+def parse_webhook_event(payload: dict[str, Any]) -> PylonWebhookEvent:
     """Parse a raw webhook JSON payload into a strongly-typed event model.
 
     Args:
