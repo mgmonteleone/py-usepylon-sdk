@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 class ScrapedArticle(BaseModel):
     """Scraped knowledge base article"""
+
     url: str
     title: str
     body_html: str
@@ -30,9 +31,7 @@ class ScrapedArticle(BaseModel):
     updated_at: datetime | None = None
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
+        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
 
 
 class PylonKBScraper:
@@ -42,7 +41,9 @@ class PylonKBScraper:
     Combines API metadata with web-scraped article content.
     """
 
-    def __init__(self, api_key: str, kb_base_url: str = "https://support.augmentcode.com"):
+    def __init__(
+        self, api_key: str, kb_base_url: str = "https://support.augmentcode.com"
+    ):
         """
         Initialize the scraper
 
@@ -51,25 +52,27 @@ class PylonKBScraper:
             kb_base_url: Base URL of the knowledge base (default: https://support.augmentcode.com)
         """
         self.api_key = api_key
-        self.kb_base_url = kb_base_url.rstrip('/')
-        self.kb_id = '405c5b71-bfd3-4ad6-9d65-d915546452c7'  # Augment Code KB ID
+        self.kb_base_url = kb_base_url.rstrip("/")
+        self.kb_id = "405c5b71-bfd3-4ad6-9d65-d915546452c7"  # Augment Code KB ID
 
     def get_collections_from_api(self) -> list[dict]:
         """Get collections from Pylon API"""
         headers = {
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
         }
 
         response = requests.get(
-            f'https://api.usepylon.com/knowledge-bases/{self.kb_id}/collections',
-            headers=headers
+            f"https://api.usepylon.com/knowledge-bases/{self.kb_id}/collections",
+            headers=headers,
         )
 
         if response.status_code == 200:
-            return response.json().get('data', [])
+            return response.json().get("data", [])
         else:
-            raise Exception(f"Failed to get collections: {response.status_code} - {response.text}")
+            raise Exception(
+                f"Failed to get collections: {response.status_code} - {response.text}"
+            )
 
     def scrape_homepage(self) -> dict[str, list[dict]]:
         """
@@ -83,37 +86,40 @@ class PylonKBScraper:
             page = browser.new_page()
 
             try:
-                page.goto(self.kb_base_url, wait_until='domcontentloaded', timeout=60000)
+                page.goto(
+                    self.kb_base_url, wait_until="domcontentloaded", timeout=60000
+                )
                 page.wait_for_timeout(5000)  # Wait for JS to render
 
                 html = page.content()
             finally:
                 browser.close()
 
-            soup = BeautifulSoup(html, 'html.parser')
-            links = soup.find_all('a', href=True)
+            soup = BeautifulSoup(html, "html.parser")
+            links = soup.find_all("a", href=True)
 
             article_links = []
             collection_links = []
 
             for link in links:
-                href = link.get('href', '')
+                href = link.get("href", "")
                 text = link.get_text(strip=True)
 
                 if not text:  # Skip empty links
                     continue
 
-                if '/articles/' in href or '/a/' in href:
-                    full_url = href if href.startswith('http') else f'{self.kb_base_url}{href}'
-                    article_links.append({'title': text, 'url': full_url})
-                elif '/collections/' in href or '/c/' in href:
-                    full_url = href if href.startswith('http') else f'{self.kb_base_url}{href}'
-                    collection_links.append({'title': text, 'url': full_url})
+                if "/articles/" in href or "/a/" in href:
+                    full_url = (
+                        href if href.startswith("http") else f"{self.kb_base_url}{href}"
+                    )
+                    article_links.append({"title": text, "url": full_url})
+                elif "/collections/" in href or "/c/" in href:
+                    full_url = (
+                        href if href.startswith("http") else f"{self.kb_base_url}{href}"
+                    )
+                    collection_links.append({"title": text, "url": full_url})
 
-            return {
-                'collections': collection_links,
-                'articles': article_links
-            }
+            return {"collections": collection_links, "articles": article_links}
 
     def scrape_collection(self, collection_url: str) -> list[dict]:
         """
@@ -130,29 +136,35 @@ class PylonKBScraper:
             page = browser.new_page()
 
             try:
-                page.goto(collection_url, wait_until='domcontentloaded', timeout=60000)
+                page.goto(collection_url, wait_until="domcontentloaded", timeout=60000)
                 page.wait_for_timeout(3000)
 
                 html = page.content()
             finally:
                 browser.close()
 
-            soup = BeautifulSoup(html, 'html.parser')
-            links = soup.find_all('a', href=True)
+            soup = BeautifulSoup(html, "html.parser")
+            links = soup.find_all("a", href=True)
 
             articles = []
             for link in links:
-                href = link.get('href', '')
+                href = link.get("href", "")
                 text = link.get_text(strip=True)
 
-                if text and ('/articles/' in href or '/a/' in href):
-                    full_url = href if href.startswith('http') else f'{self.kb_base_url}{href}'
-                    articles.append({'title': text, 'url': full_url})
+                if text and ("/articles/" in href or "/a/" in href):
+                    full_url = (
+                        href if href.startswith("http") else f"{self.kb_base_url}{href}"
+                    )
+                    articles.append({"title": text, "url": full_url})
 
             return articles
 
-    def scrape_article(self, url: str, collection_id: str | None = None,
-                      collection_title: str | None = None) -> ScrapedArticle:
+    def scrape_article(
+        self,
+        url: str,
+        collection_id: str | None = None,
+        collection_title: str | None = None,
+    ) -> ScrapedArticle:
         """
         Scrape a single article
 
@@ -169,33 +181,33 @@ class PylonKBScraper:
             page = browser.new_page()
 
             try:
-                page.goto(url, wait_until='domcontentloaded', timeout=60000)
+                page.goto(url, wait_until="domcontentloaded", timeout=60000)
                 page.wait_for_timeout(3000)
 
                 html = page.content()
             finally:
                 browser.close()
 
-            soup = BeautifulSoup(html, 'html.parser')
+            soup = BeautifulSoup(html, "html.parser")
 
             # Extract title
-            title_elem = soup.find('h1')
-            title = title_elem.get_text(strip=True) if title_elem else 'Unknown'
+            title_elem = soup.find("h1")
+            title = title_elem.get_text(strip=True) if title_elem else "Unknown"
 
             # Extract article body (try multiple selectors)
             body = (
-                soup.find('article') or
-                soup.find(class_='article-body') or
-                soup.find(class_='content') or
-                soup.find(class_='article-content') or
-                soup.find('main')
+                soup.find("article")
+                or soup.find(class_="article-body")
+                or soup.find(class_="content")
+                or soup.find(class_="article-content")
+                or soup.find("main")
             )
 
-            body_html = str(body) if body else ''
-            body_text = body.get_text(strip=True) if body else ''
+            body_html = str(body) if body else ""
+            body_text = body.get_text(strip=True) if body else ""
 
             # Extract slug from URL
-            slug = url.split('/')[-1] if '/' in url else None
+            slug = url.split("/")[-1] if "/" in url else None
 
             return ScrapedArticle(
                 url=url,
@@ -204,7 +216,7 @@ class PylonKBScraper:
                 body_text=body_text,
                 collection_id=collection_id,
                 collection_title=collection_title,
-                slug=slug
+                slug=slug,
             )
 
     def scrape_all_articles(self, delay_seconds: float = 1.0) -> list[ScrapedArticle]:
@@ -230,9 +242,9 @@ class PylonKBScraper:
         collection_map = {}
         for api_coll in api_collections:
             # Try to match by slug
-            for web_coll in homepage_data['collections']:
-                if api_coll['slug'] in web_coll['url']:
-                    collection_map[web_coll['url']] = api_coll
+            for web_coll in homepage_data["collections"]:
+                if api_coll["slug"] in web_coll["url"]:
+                    collection_map[web_coll["url"]] = api_coll
                     break
 
         # Scrape all collections to get article lists
@@ -240,24 +252,26 @@ class PylonKBScraper:
         article_urls_seen = set()
 
         print("📁 Scraping collections for articles...")
-        for web_coll in homepage_data['collections']:
-            api_coll = collection_map.get(web_coll['url'])
-            coll_id = api_coll['id'] if api_coll else None
-            coll_title = web_coll['title']
+        for web_coll in homepage_data["collections"]:
+            api_coll = collection_map.get(web_coll["url"])
+            coll_id = api_coll["id"] if api_coll else None
+            coll_title = web_coll["title"]
 
             print(f"   {coll_title}...")
-            articles_in_coll = self.scrape_collection(web_coll['url'])
+            articles_in_coll = self.scrape_collection(web_coll["url"])
             print(f"      Found {len(articles_in_coll)} articles")
 
             for article_info in articles_in_coll:
-                if article_info['url'] not in article_urls_seen:
-                    article_urls_seen.add(article_info['url'])
-                    all_articles.append({
-                        'url': article_info['url'],
-                        'title': article_info['title'],
-                        'collection_id': coll_id,
-                        'collection_title': coll_title
-                    })
+                if article_info["url"] not in article_urls_seen:
+                    article_urls_seen.add(article_info["url"])
+                    all_articles.append(
+                        {
+                            "url": article_info["url"],
+                            "title": article_info["title"],
+                            "collection_id": coll_id,
+                            "collection_title": coll_title,
+                        }
+                    )
 
             time.sleep(delay_seconds)
 
@@ -269,9 +283,9 @@ class PylonKBScraper:
 
             try:
                 scraped = self.scrape_article(
-                    article_info['url'],
-                    article_info.get('collection_id'),
-                    article_info.get('collection_title')
+                    article_info["url"],
+                    article_info.get("collection_id"),
+                    article_info.get("collection_title"),
                 )
                 scraped_articles.append(scraped)
             except Exception as e:
@@ -288,12 +302,12 @@ def export_to_json(articles: list[ScrapedArticle], output_file: str) -> None:
     import json
 
     data = {
-        'exported_at': datetime.now().isoformat(),
-        'total_articles': len(articles),
-        'articles': [article.model_dump() for article in articles]
+        "exported_at": datetime.now().isoformat(),
+        "total_articles": len(articles),
+        "articles": [article.model_dump() for article in articles],
     }
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     print(f"✅ Exported {len(articles)} articles to {output_file}")
@@ -303,34 +317,49 @@ def export_to_csv(articles: list[ScrapedArticle], output_file: str) -> None:
     """Export scraped articles to CSV"""
     import csv
 
-    with open(output_file, 'w', newline='', encoding='utf-8') as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow([
-            'Title', 'URL', 'Collection', 'Collection ID', 'Slug',
-            'Body Text (Preview)', 'Body HTML Length'
-        ])
+        writer.writerow(
+            [
+                "Title",
+                "URL",
+                "Collection",
+                "Collection ID",
+                "Slug",
+                "Body Text (Preview)",
+                "Body HTML Length",
+            ]
+        )
 
         for article in articles:
-            writer.writerow([
-                article.title,
-                article.url,
-                article.collection_title or '',
-                article.collection_id or '',
-                article.slug or '',
-                article.body_text[:500] + '...' if len(article.body_text) > 500 else article.body_text,
-                len(article.body_html)
-            ])
+            writer.writerow(
+                [
+                    article.title,
+                    article.url,
+                    article.collection_title or "",
+                    article.collection_id or "",
+                    article.slug or "",
+                    article.body_text[:500] + "..."
+                    if len(article.body_text) > 500
+                    else article.body_text,
+                    len(article.body_html),
+                ]
+            )
 
     print(f"✅ Exported {len(articles)} articles to {output_file}")
 
 
-def export_to_html(articles: list[ScrapedArticle], output_file: str, title: str = "Knowledge Base Articles") -> None:
+def export_to_html(
+    articles: list[ScrapedArticle],
+    output_file: str,
+    title: str = "Knowledge Base Articles",
+) -> None:
     """Export scraped articles to a single HTML file"""
 
     # Group by collection
     by_collection = {}
     for article in articles:
-        coll = article.collection_title or 'Uncategorized'
+        coll = article.collection_title or "Uncategorized"
         if coll not in by_collection:
             by_collection[coll] = []
         by_collection[coll].append(article)
@@ -359,7 +388,7 @@ def export_to_html(articles: list[ScrapedArticle], output_file: str, title: str 
 </head>
 <body>
     <h1>{title}</h1>
-    <p>Exported on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <p>Exported on {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
     <p><strong>Total Articles:</strong> {len(articles)}</p>
 
     <div class="toc">
@@ -383,7 +412,7 @@ def export_to_html(articles: list[ScrapedArticle], output_file: str, title: str 
         <h3 class="article-title">{article.title}</h3>
         <div class="article-meta">
             <a href="{article.url}" target="_blank">View Original</a>
-            {f' | Collection: {article.collection_title}' if article.collection_title else ''}
+            {f" | Collection: {article.collection_title}" if article.collection_title else ""}
         </div>
         <div class="article-body">
             {article.body_html}
@@ -396,8 +425,7 @@ def export_to_html(articles: list[ScrapedArticle], output_file: str, title: str 
 </html>
 """
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(html)
 
     print(f"✅ Exported {len(articles)} articles to {output_file}")
-

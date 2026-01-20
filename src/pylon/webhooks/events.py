@@ -113,9 +113,7 @@ class IssueFieldChangedEvent(IssueSnapshotEvent):
 class IssueStatusChangedEvent(IssueSnapshotEvent):
     """Event emitted when the issue status transitions."""
 
-    event_type: Literal["issue_status_changed"] = Field(
-        default="issue_status_changed"
-    )
+    event_type: Literal["issue_status_changed"] = Field(default="issue_status_changed")
 
 
 class IssueTagsChangedEvent(IssueSnapshotEvent):
@@ -173,4 +171,3 @@ def parse_webhook_event(payload: dict[str, Any]) -> PylonWebhookEvent:
             expected schema or `event_type` is unknown.
     """
     return _PYLON_WEBHOOK_EVENT_ADAPTER.validate_python(payload)
-

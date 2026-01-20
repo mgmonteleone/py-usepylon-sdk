@@ -116,12 +116,20 @@ class IssueMessageNewEvent(BaseIssueEvent):
 
 
 PylonWebhookEvent = Annotated[
-    IssueNewEvent | IssueAssignedEvent | IssueFieldChangedEvent | IssueStatusChangedEvent | IssueTagsChangedEvent | IssueReactionEvent | IssueMessageNewEvent,
+    IssueNewEvent
+    | IssueAssignedEvent
+    | IssueFieldChangedEvent
+    | IssueStatusChangedEvent
+    | IssueTagsChangedEvent
+    | IssueReactionEvent
+    | IssueMessageNewEvent,
     Field(discriminator="event_type"),
 ]
 
 
-_PYLON_WEBHOOK_EVENT_ADAPTER: TypeAdapter[PylonWebhookEvent] = TypeAdapter(PylonWebhookEvent)
+_PYLON_WEBHOOK_EVENT_ADAPTER: TypeAdapter[PylonWebhookEvent] = TypeAdapter(
+    PylonWebhookEvent
+)
 
 
 def parse_webhook_event(payload: dict[str, Any]) -> PylonWebhookEvent:

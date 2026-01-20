@@ -124,4 +124,3 @@ class AsyncUsersResource(BaseAsyncResource[PylonUser]):
             items = response.get("data", [])
             for item in items:
                 yield PylonUser.from_pylon_dict(item)
-

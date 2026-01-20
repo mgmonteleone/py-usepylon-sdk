@@ -291,4 +291,3 @@ class TestPylonMe:
         assert me.id == "user_123"
         assert me.name == "Current User"
         assert me.email == "me@example.com"
-

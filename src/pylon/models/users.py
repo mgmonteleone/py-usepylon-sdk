@@ -51,4 +51,3 @@ class PylonUser(BaseModel):
             A PylonUser instance.
         """
         return cls.model_validate(data)
-

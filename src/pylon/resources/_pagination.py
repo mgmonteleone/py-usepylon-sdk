@@ -181,4 +181,3 @@ class AsyncPaginator(Generic[T]):
                 break
 
             cursor = pagination.cursor
-

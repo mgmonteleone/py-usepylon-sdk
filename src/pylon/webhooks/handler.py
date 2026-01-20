@@ -27,6 +27,8 @@ import time
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, Any
 
+from pydantic import ValidationError
+
 from pylon.exceptions import (
     PylonWebhookError,
     PylonWebhookSignatureError,
@@ -79,6 +81,7 @@ class WebhookHandler:
         *,
         timestamp_tolerance: int = DEFAULT_TIMESTAMP_TOLERANCE_SECONDS,
         verify_signature: bool = True,
+        require_timestamp: bool = False,
     ) -> None:
         """Initialize the webhook handler.
 
@@ -89,10 +92,16 @@ class WebhookHandler:
                 Default is 300 seconds (5 minutes).
             verify_signature: Whether to verify webhook signatures.
                 Set to False only for testing/development.
+            require_timestamp: Whether to require a timestamp header for replay
+                protection. When False (default), webhooks without timestamps
+                are accepted but replay protection is not applied. When True,
+                webhooks without a timestamp header are rejected. Set to True
+                for stricter security if your webhook provider includes timestamps.
         """
         self._secret = secret
         self._timestamp_tolerance = timestamp_tolerance
         self._verify_signature = verify_signature
+        self._require_timestamp = require_timestamp
         self._handlers: dict[str, list[EventHandler]] = {}
         self._catch_all_handlers: list[EventHandler] = []
 
@@ -161,9 +170,7 @@ class WebhookHandler:
             self._validate_timestamp(timestamp)
 
         # Build the signed payload (timestamp + payload if timestamp provided)
-        signed_payload = (
-            f"{timestamp}.".encode() + payload if timestamp else payload
-        )
+        signed_payload = f"{timestamp}.".encode() + payload if timestamp else payload
 
         # Compute expected signature
         expected_sig = hmac.new(
@@ -224,6 +231,13 @@ class WebhookHandler:
         Verifies the signature (if enabled), parses the event, and
         dispatches to registered handlers.
 
+        Note:
+            Timestamp validation for replay protection only occurs when a
+            timestamp header is present. If `require_timestamp=True` was
+            set during initialization, webhooks without timestamps are
+            rejected. Otherwise, missing timestamps are allowed but no
+            replay protection is applied.
+
         Args:
             payload: The raw webhook payload (bytes or string).
             headers: HTTP headers from the webhook request.
@@ -232,24 +246,30 @@ class WebhookHandler:
             List of results from all executed handlers.
 
         Raises:
-            PylonWebhookSignatureError: If signature verification fails.
-            PylonWebhookTimestampError: If timestamp validation fails.
+            PylonWebhookSignatureError: If signature verification fails
+                or signature header is missing.
+            PylonWebhookTimestampError: If timestamp validation fails
+                or timestamp is required but missing.
             PylonWebhookError: If payload parsing fails.
         """
         # Convert string payload to bytes if needed
         payload_bytes = payload.encode("utf-8") if isinstance(payload, str) else payload
 
         # Extract signature and timestamp from headers
-        # Common header formats: X-Pylon-Signature, X-Signature, Pylon-Signature
+        # Supported header formats: X-Pylon-Signature, Pylon-Signature, X-Signature
         signature = (
             headers.get("X-Pylon-Signature")
             or headers.get("x-pylon-signature")
+            or headers.get("Pylon-Signature")
+            or headers.get("pylon-signature")
             or headers.get("X-Signature")
             or headers.get("x-signature")
         )
         timestamp = (
             headers.get("X-Pylon-Timestamp")
             or headers.get("x-pylon-timestamp")
+            or headers.get("Pylon-Timestamp")
+            or headers.get("pylon-timestamp")
             or headers.get("X-Timestamp")
             or headers.get("x-timestamp")
         )
@@ -257,8 +277,13 @@ class WebhookHandler:
         # Verify signature if enabled
         if self._verify_signature:
             if not signature:
-                raise PylonWebhookSignatureError(
-                    "Missing webhook signature header"
+                raise PylonWebhookSignatureError("Missing webhook signature header")
+            # Require timestamp if configured (for replay attack protection)
+            if self._require_timestamp and not timestamp:
+                raise PylonWebhookTimestampError(
+                    "Missing webhook timestamp header (required for replay protection)",
+                    timestamp=None,
+                    tolerance_seconds=self._timestamp_tolerance,
                 )
             self.verify_signature(payload_bytes, signature, timestamp)
 
@@ -269,7 +294,13 @@ class WebhookHandler:
             raise PylonWebhookError(f"Invalid JSON payload: {e}") from e
 
         # Parse into event model
-        event = parse_webhook_event(payload_dict)
+        # Wrap ValidationError to maintain consistent public exception contract
+        try:
+            event = parse_webhook_event(payload_dict)
+        except ValidationError as e:
+            raise PylonWebhookError(
+                f"Invalid webhook payload: {e.error_count()} validation error(s)"
+            ) from e
 
         # Dispatch to handlers
         results: list[Any] = []
@@ -292,4 +323,3 @@ class WebhookHandler:
     def registered_event_types(self) -> list[str]:
         """Get list of event types that have registered handlers."""
         return list(self._handlers.keys())
-

@@ -81,6 +81,7 @@ class TestWebhookHandler:
         assert handler._secret == webhook_secret
         assert handler._timestamp_tolerance == 300
         assert handler._verify_signature is True
+        assert handler._require_timestamp is False
 
     def test_handler_custom_tolerance(self, webhook_secret: str) -> None:
         """Test handler can be initialized with custom timestamp tolerance."""
@@ -91,6 +92,11 @@ class TestWebhookHandler:
         """Test handler can disable signature verification."""
         handler = WebhookHandler(secret=webhook_secret, verify_signature=False)
         assert handler._verify_signature is False
+
+    def test_handler_require_timestamp(self, webhook_secret: str) -> None:
+        """Test handler can require timestamp for replay protection."""
+        handler = WebhookHandler(secret=webhook_secret, require_timestamp=True)
+        assert handler._require_timestamp is True
 
 
 class TestEventRegistration:
@@ -172,9 +178,7 @@ class TestSignatureVerification:
         # Should not raise
         handler.verify_signature(payload, signature, timestamp)
 
-    def test_invalid_signature_raises_error(
-        self, handler: WebhookHandler
-    ) -> None:
+    def test_invalid_signature_raises_error(self, handler: WebhookHandler) -> None:
         """Test invalid signature raises PylonWebhookSignatureError."""
         payload = b'{"event_type": "issue_new"}'
         bad_signature = "invalid_signature_12345"
@@ -210,9 +214,7 @@ class TestTimestampValidation:
         # Should not raise
         handler.verify_signature(payload, signature, timestamp)
 
-    def test_expired_timestamp_raises_error(
-        self, webhook_secret: str
-    ) -> None:
+    def test_expired_timestamp_raises_error(self, webhook_secret: str) -> None:
         """Test expired timestamp raises PylonWebhookTimestampError."""
         handler = WebhookHandler(secret=webhook_secret, timestamp_tolerance=300)
         payload = b'{"event_type": "issue_new"}'
@@ -225,9 +227,7 @@ class TestTimestampValidation:
 
         assert "too old" in str(exc_info.value)
 
-    def test_future_timestamp_raises_error(
-        self, webhook_secret: str
-    ) -> None:
+    def test_future_timestamp_raises_error(self, webhook_secret: str) -> None:
         """Test future timestamp raises PylonWebhookTimestampError."""
         handler = WebhookHandler(secret=webhook_secret, timestamp_tolerance=300)
         payload = b'{"event_type": "issue_new"}'
@@ -383,13 +383,70 @@ class TestHandleWithSignatureVerification:
 
         assert "Missing" in str(exc_info.value)
 
+    def test_handle_accepts_pylon_signature_header(
+        self,
+        webhook_secret: str,
+        sample_issue_new_payload: dict[str, Any],
+    ) -> None:
+        """Test handle() accepts Pylon-Signature header format."""
+        handler = WebhookHandler(secret=webhook_secret)
+
+        @handler.on("issue_new")
+        def handle_issue(_event: Any) -> str:
+            return "success"
+
+        payload = json.dumps(sample_issue_new_payload).encode()
+        signature = compute_signature(webhook_secret, payload)
+        headers = {"Pylon-Signature": signature}
+
+        results = handler.handle(payload, headers)
+        assert results == ["success"]
+
+    def test_handle_requires_timestamp_when_configured(
+        self,
+        webhook_secret: str,
+        sample_issue_new_payload: dict[str, Any],
+    ) -> None:
+        """Test handle() raises error when require_timestamp is True and no timestamp."""
+        handler = WebhookHandler(secret=webhook_secret, require_timestamp=True)
+
+        payload = json.dumps(sample_issue_new_payload).encode()
+        signature = compute_signature(webhook_secret, payload)
+        headers = {"X-Pylon-Signature": signature}
+
+        with pytest.raises(PylonWebhookTimestampError) as exc_info:
+            handler.handle(payload, headers)
+
+        assert "Missing webhook timestamp" in str(exc_info.value)
+
+    def test_handle_passes_with_timestamp_when_required(
+        self,
+        webhook_secret: str,
+        sample_issue_new_payload: dict[str, Any],
+    ) -> None:
+        """Test handle() passes when require_timestamp is True and timestamp is present."""
+        handler = WebhookHandler(secret=webhook_secret, require_timestamp=True)
+
+        @handler.on("issue_new")
+        def handle_issue(_event: Any) -> str:
+            return "success"
+
+        payload = json.dumps(sample_issue_new_payload).encode()
+        timestamp = str(int(time.time()))
+        signature = compute_signature(webhook_secret, payload, timestamp)
+        headers = {
+            "X-Pylon-Signature": signature,
+            "X-Pylon-Timestamp": timestamp,
+        }
+
+        results = handler.handle(payload, headers)
+        assert results == ["success"]
+
 
 class TestErrorHandling:
     """Tests for webhook error handling."""
 
-    def test_invalid_json_raises_error(
-        self, webhook_secret: str
-    ) -> None:
+    def test_invalid_json_raises_error(self, webhook_secret: str) -> None:
         """Test invalid JSON payload raises PylonWebhookError."""
         handler = WebhookHandler(secret=webhook_secret, verify_signature=False)
 
@@ -398,3 +455,16 @@ class TestErrorHandling:
 
         assert "Invalid JSON" in str(exc_info.value)
 
+    def test_invalid_event_payload_raises_pylon_error(
+        self, webhook_secret: str
+    ) -> None:
+        """Test ValidationError is wrapped in PylonWebhookError."""
+        handler = WebhookHandler(secret=webhook_secret, verify_signature=False)
+
+        # Valid JSON but missing required fields for event parsing
+        invalid_payload = json.dumps({"not_event_type": "missing"}).encode()
+
+        with pytest.raises(PylonWebhookError) as exc_info:
+            handler.handle(invalid_payload, {})
+
+        assert "validation error" in str(exc_info.value)

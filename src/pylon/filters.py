@@ -376,4 +376,3 @@ class Field:
             A FieldFilter for the not-null check condition.
         """
         return FieldFilter(self._name, "is_null", False)
-

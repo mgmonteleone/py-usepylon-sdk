@@ -145,4 +145,3 @@ class PylonAccount(BaseModel):
                 elif value_str in ("false", "0", "no"):
                     return False
         return None
-

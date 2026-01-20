@@ -66,12 +66,12 @@ def print_statistics(stats: dict):
     print(f"🟡 Incomplete: {stats['incomplete_count']}")
 
     print("\n📂 Articles by Category:")
-    for category, count in stats['categories'].items():
+    for category, count in stats["categories"].items():
         print(f"   {category:40} {count:3} articles")
 
-    if stats['tags']:
+    if stats["tags"]:
         print("\n🏷️  Top Tags:")
-        for tag, count in list(stats['tags'].items())[:10]:
+        for tag, count in list(stats["tags"].items())[:10]:
             print(f"   {tag:40} {count:3} articles")
 
     print("\n" + "=" * 80)
@@ -80,56 +80,39 @@ def print_statistics(stats: dict):
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        description='Export Pylon knowledge base content from Markdown files',
+        description="Export Pylon knowledge base content from Markdown files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=__doc__
+        epilog=__doc__,
     )
 
     parser.add_argument(
-        'input_file',
-        help='Path to input Markdown file (e.g., reference/FAQ.md)'
+        "input_file", help="Path to input Markdown file (e.g., reference/FAQ.md)"
+    )
+
+    parser.add_argument("--json", metavar="FILE", help="Export to JSON file")
+
+    parser.add_argument("--csv", metavar="FILE", help="Export to CSV file")
+
+    parser.add_argument("--html", metavar="FILE", help="Export to HTML file")
+
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Export to all formats (JSON, CSV, HTML) with default names",
     )
 
     parser.add_argument(
-        '--json',
-        metavar='FILE',
-        help='Export to JSON file'
+        "--stats", action="store_true", help="Show statistics only (no export)"
     )
 
     parser.add_argument(
-        '--csv',
-        metavar='FILE',
-        help='Export to CSV file'
+        "--title",
+        default="Knowledge Base",
+        help='Title for HTML export (default: "Knowledge Base")',
     )
 
     parser.add_argument(
-        '--html',
-        metavar='FILE',
-        help='Export to HTML file'
-    )
-
-    parser.add_argument(
-        '--all',
-        action='store_true',
-        help='Export to all formats (JSON, CSV, HTML) with default names'
-    )
-
-    parser.add_argument(
-        '--stats',
-        action='store_true',
-        help='Show statistics only (no export)'
-    )
-
-    parser.add_argument(
-        '--title',
-        default='Knowledge Base',
-        help='Title for HTML export (default: "Knowledge Base")'
-    )
-
-    parser.add_argument(
-        '--no-logo',
-        action='store_true',
-        help='Suppress ASCII art logo'
+        "--no-logo", action="store_true", help="Suppress ASCII art logo"
     )
 
     args = parser.parse_args()
@@ -178,6 +161,5 @@ def main():
     print("\n✅ Export complete!\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-

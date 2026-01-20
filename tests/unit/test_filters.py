@@ -296,4 +296,3 @@ class TestOperatorOverloading:
         assert "or" in result["and"][0]
         # Second part is Not
         assert "not" in result["and"][1]
-

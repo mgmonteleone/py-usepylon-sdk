@@ -42,4 +42,3 @@ class PylonTag(BaseModel):
             A PylonTag instance.
         """
         return cls.model_validate(data)
-

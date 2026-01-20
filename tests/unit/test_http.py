@@ -92,7 +92,9 @@ class TestSyncHTTPTransport:
     def test_rate_limit_error(self):
         """Should raise PylonRateLimitError on 429."""
         respx.get("https://api.usepylon.com/test").mock(
-            return_value=httpx.Response(429, json={"error": {"message": "Rate limited"}})
+            return_value=httpx.Response(
+                429, json={"error": {"message": "Rate limited"}}
+            )
         )
 
         transport = SyncHTTPTransport(api_key="test-key", max_retries=0)
@@ -118,7 +120,9 @@ class TestSyncHTTPTransport:
     def test_server_error(self):
         """Should raise PylonServerError on 5xx."""
         respx.get("https://api.usepylon.com/test").mock(
-            return_value=httpx.Response(500, json={"error": {"message": "Server error"}})
+            return_value=httpx.Response(
+                500, json={"error": {"message": "Server error"}}
+            )
         )
 
         transport = SyncHTTPTransport(api_key="test-key", max_retries=0)
@@ -201,4 +205,3 @@ class TestAsyncHTTPTransport:
         """Should work as async context manager."""
         async with AsyncHTTPTransport(api_key="test-key") as transport:
             assert transport._client is not None
-

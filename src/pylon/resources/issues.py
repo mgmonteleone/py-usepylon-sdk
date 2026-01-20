@@ -475,4 +475,3 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
         )
         items = response.get("data", [])
         return [PylonMessage.from_pylon_dict(item) for item in items]
-

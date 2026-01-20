@@ -62,37 +62,35 @@ class KnowledgeArticle(BaseModel):
     updated_at: datetime | None = None
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
+        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
 
     @staticmethod
     def markdown_to_html(md_text: str) -> str:
         """Convert Markdown to HTML."""
         html = markdown.markdown(
             md_text,
-            extensions=['extra', 'nl2br', 'sane_lists', 'tables', 'fenced_code']
+            extensions=["extra", "nl2br", "sane_lists", "tables", "fenced_code"],
         )
         # Add security attributes to links
-        soup = BeautifulSoup(html, 'html.parser')
-        for link in soup.find_all('a'):
-            link['target'] = '_blank'
-            link['rel'] = 'noopener noreferrer'
+        soup = BeautifulSoup(html, "html.parser")
+        for link in soup.find_all("a"):
+            link["target"] = "_blank"
+            link["rel"] = "noopener noreferrer"
         return str(soup)
 
     @staticmethod
     def html_to_plain(html_text: str) -> str:
         """Convert HTML to plain text."""
-        soup = BeautifulSoup(html_text, 'html.parser')
-        return soup.get_text(separator=' ', strip=True)
+        soup = BeautifulSoup(html_text, "html.parser")
+        return soup.get_text(separator=" ", strip=True)
 
     @staticmethod
     def generate_url_name(title: str) -> str:
         """Generate URL-friendly name from title."""
         # Remove special characters, replace spaces with hyphens
-        url_name = re.sub(r'[^\w\s-]', '', title)
-        url_name = re.sub(r'[\s_]+', '-', url_name)
-        url_name = url_name.strip('-')
+        url_name = re.sub(r"[^\w\s-]", "", title)
+        url_name = re.sub(r"[\s_]+", "-", url_name)
+        url_name = url_name.strip("-")
         return url_name[:255]  # Limit to 255 chars
 
     @classmethod
@@ -105,7 +103,7 @@ class KnowledgeArticle(BaseModel):
         subcategory: str | None = None,
         is_internal_only: bool = False,
         is_incomplete: bool = False,
-        tags: list[str] | None = None
+        tags: list[str] | None = None,
     ) -> "KnowledgeArticle":
         """
         Create a KnowledgeArticle from Markdown content.
@@ -138,7 +136,7 @@ class KnowledgeArticle(BaseModel):
             tags=tags or [],
             is_internal_only=is_internal_only,
             is_incomplete=is_incomplete,
-            url_name=url_name
+            url_name=url_name,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -152,16 +150,16 @@ class KnowledgeArticle(BaseModel):
         Note: This requires Salesforce Knowledge license.
         """
         return {
-            'Title': self.title[:255],
-            'UrlName': self.url_name,
-            'Summary': self.answer_plain[:1000],
-            'Content__c': self.answer_html[:32768],
-            'Question__c': self.markdown_to_html(self.question)[:32768],
-            'Language': 'en_US',
-            'IsVisibleInApp': True,
-            'IsVisibleInCsp': not self.is_internal_only,
-            'IsVisibleInPkb': False,
-            'IsVisibleInPrm': False
+            "Title": self.title[:255],
+            "UrlName": self.url_name,
+            "Summary": self.answer_plain[:1000],
+            "Content__c": self.answer_html[:32768],
+            "Question__c": self.markdown_to_html(self.question)[:32768],
+            "Language": "en_US",
+            "IsVisibleInApp": True,
+            "IsVisibleInCsp": not self.is_internal_only,
+            "IsVisibleInPkb": False,
+            "IsVisibleInPrm": False,
         }
 
 
@@ -188,11 +186,11 @@ def parse_faq_markdown(file_path: str) -> list[KnowledgeArticle]:
     """
     articles = []
 
-    with open(file_path, encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     # Split by H1 headings (categories)
-    category_sections = re.split(r'^# (.+)$', content, flags=re.MULTILINE)
+    category_sections = re.split(r"^# (.+)$", content, flags=re.MULTILINE)
 
     # First element is content before first H1 (usually empty)
     category_sections = category_sections[1:]
@@ -206,7 +204,9 @@ def parse_faq_markdown(file_path: str) -> list[KnowledgeArticle]:
         category_content = category_sections[i + 1]
 
         # Split by H3 headings (questions)
-        question_sections = re.split(r'^### (.+)$', category_content, flags=re.MULTILINE)
+        question_sections = re.split(
+            r"^### (.+)$", category_content, flags=re.MULTILINE
+        )
 
         # First element is content before first H3 (usually empty or intro text)
         question_sections = question_sections[1:]
@@ -224,16 +224,18 @@ def parse_faq_markdown(file_path: str) -> list[KnowledgeArticle]:
                 continue
 
             # Check for special markers
-            is_internal_only = '🔵' in answer or 'internal only' in answer.lower()
-            is_incomplete = '🟡' in answer or 'incomplete' in answer.lower() or '❓' in answer
+            is_internal_only = "🔵" in answer or "internal only" in answer.lower()
+            is_incomplete = (
+                "🟡" in answer or "incomplete" in answer.lower() or "❓" in answer
+            )
 
             # Extract tags from question (if any)
             tags = []
-            if '[' in question and ']' in question:
-                tag_match = re.findall(r'\[([^\]]+)\]', question)
+            if "[" in question and "]" in question:
+                tag_match = re.findall(r"\[([^\]]+)\]", question)
                 tags = [tag.strip() for tag in tag_match]
                 # Remove tags from question
-                question = re.sub(r'\[([^\]]+)\]', '', question).strip()
+                question = re.sub(r"\[([^\]]+)\]", "", question).strip()
 
             # Create article
             article = KnowledgeArticle.from_markdown(
@@ -243,7 +245,7 @@ def parse_faq_markdown(file_path: str) -> list[KnowledgeArticle]:
                 category=category,
                 is_internal_only=is_internal_only,
                 is_incomplete=is_incomplete,
-                tags=tags
+                tags=tags,
             )
 
             articles.append(article)
@@ -251,7 +253,9 @@ def parse_faq_markdown(file_path: str) -> list[KnowledgeArticle]:
     return articles
 
 
-def export_to_json(articles: list[KnowledgeArticle], output_path: str, indent: int = 2) -> None:
+def export_to_json(
+    articles: list[KnowledgeArticle], output_path: str, indent: int = 2
+) -> None:
     """
     Export articles to JSON format.
 
@@ -263,15 +267,15 @@ def export_to_json(articles: list[KnowledgeArticle], output_path: str, indent: i
     import json
 
     data = {
-        'exported_at': datetime.now().isoformat(),
-        'total_articles': len(articles),
-        'articles': [article.to_dict() for article in articles]
+        "exported_at": datetime.now().isoformat(),
+        "total_articles": len(articles),
+        "articles": [article.to_dict() for article in articles],
     }
 
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=indent, ensure_ascii=False)
 
-    print(f'✅ Exported {len(articles)} articles to {output_path}')
+    print(f"✅ Exported {len(articles)} articles to {output_path}")
 
 
 def export_to_csv(articles: list[KnowledgeArticle], output_path: str) -> None:
@@ -284,14 +288,22 @@ def export_to_csv(articles: list[KnowledgeArticle], output_path: str) -> None:
     """
     import csv
 
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+    with open(output_path, "w", newline="", encoding="utf-8") as f:
         if not articles:
             return
 
         fieldnames = [
-            'title', 'category', 'subcategory', 'question',
-            'answer_markdown', 'answer_html', 'answer_plain',
-            'tags', 'is_internal_only', 'is_incomplete', 'url_name'
+            "title",
+            "category",
+            "subcategory",
+            "question",
+            "answer_markdown",
+            "answer_html",
+            "answer_plain",
+            "tags",
+            "is_internal_only",
+            "is_incomplete",
+            "url_name",
         ]
 
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -300,15 +312,17 @@ def export_to_csv(articles: list[KnowledgeArticle], output_path: str) -> None:
         for article in articles:
             row = article.to_dict()
             # Convert list to comma-separated string
-            row['tags'] = ', '.join(row['tags'])
+            row["tags"] = ", ".join(row["tags"])
             # Only include specified fields
             row = {k: v for k, v in row.items() if k in fieldnames}
             writer.writerow(row)
 
-    print(f'✅ Exported {len(articles)} articles to {output_path}')
+    print(f"✅ Exported {len(articles)} articles to {output_path}")
 
 
-def export_to_html(articles: list[KnowledgeArticle], output_path: str, title: str = "Knowledge Base") -> None:
+def export_to_html(
+    articles: list[KnowledgeArticle], output_path: str, title: str = "Knowledge Base"
+) -> None:
     """
     Export articles to a single HTML file.
 
@@ -318,7 +332,7 @@ def export_to_html(articles: list[KnowledgeArticle], output_path: str, title: st
         title: HTML page title
     """
     html_parts = [
-        f'''<!DOCTYPE html>
+        f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -455,7 +469,7 @@ def export_to_html(articles: list[KnowledgeArticle], output_path: str, title: st
             {len(articles)} articles • Exported {datetime.now().strftime("%Y-%m-%d %H:%M")}
         </div>
     </div>
-'''
+"""
     ]
 
     # Group articles by category
@@ -466,44 +480,58 @@ def export_to_html(articles: list[KnowledgeArticle], output_path: str, title: st
         categories[article.category].append(article)
 
     # Table of contents
-    html_parts.append('    <div class="toc">\n        <h2>📚 Table of Contents</h2>\n        <ul>\n')
+    html_parts.append(
+        '    <div class="toc">\n        <h2>📚 Table of Contents</h2>\n        <ul>\n'
+    )
     for category in sorted(categories.keys()):
-        category_id = re.sub(r'[^\w-]', '', category.replace(' ', '-')).lower()
-        html_parts.append(f'            <li><a href="#{category_id}">{category}</a> ({len(categories[category])} articles)</li>\n')
-    html_parts.append('        </ul>\n    </div>\n\n')
+        category_id = re.sub(r"[^\w-]", "", category.replace(" ", "-")).lower()
+        html_parts.append(
+            f'            <li><a href="#{category_id}">{category}</a> ({len(categories[category])} articles)</li>\n'
+        )
+    html_parts.append("        </ul>\n    </div>\n\n")
 
     # Articles by category
     for category in sorted(categories.keys()):
-        category_id = re.sub(r'[^\w-]', '', category.replace(' ', '-')).lower()
+        category_id = re.sub(r"[^\w-]", "", category.replace(" ", "-")).lower()
         html_parts.append(f'    <div class="category" id="{category_id}">\n')
         html_parts.append(f'        <h2 class="category-title">{category}</h2>\n')
 
         for article in categories[category]:
             html_parts.append('        <div class="article">\n')
-            html_parts.append(f'            <h3 class="article-title">{article.title}</h3>\n')
+            html_parts.append(
+                f'            <h3 class="article-title">{article.title}</h3>\n'
+            )
 
             # Meta badges
             if article.is_internal_only or article.is_incomplete or article.tags:
                 html_parts.append('            <div class="article-meta">\n')
                 if article.is_internal_only:
-                    html_parts.append('                <span class="badge badge-internal">🔵 Internal Only</span>\n')
+                    html_parts.append(
+                        '                <span class="badge badge-internal">🔵 Internal Only</span>\n'
+                    )
                 if article.is_incomplete:
-                    html_parts.append('                <span class="badge badge-incomplete">🟡 Incomplete</span>\n')
+                    html_parts.append(
+                        '                <span class="badge badge-incomplete">🟡 Incomplete</span>\n'
+                    )
                 for tag in article.tags:
-                    html_parts.append(f'                <span class="badge badge-tag">{tag}</span>\n')
-                html_parts.append('            </div>\n')
+                    html_parts.append(
+                        f'                <span class="badge badge-tag">{tag}</span>\n'
+                    )
+                html_parts.append("            </div>\n")
 
-            html_parts.append(f'            <div class="article-content">\n                {article.answer_html}\n            </div>\n')
-            html_parts.append('        </div>\n')
+            html_parts.append(
+                f'            <div class="article-content">\n                {article.answer_html}\n            </div>\n'
+            )
+            html_parts.append("        </div>\n")
 
-        html_parts.append('    </div>\n\n')
+        html_parts.append("    </div>\n\n")
 
-    html_parts.append('</body>\n</html>')
+    html_parts.append("</body>\n</html>")
 
-    with open(output_path, 'w', encoding='utf-8') as f:
-        f.write(''.join(html_parts))
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write("".join(html_parts))
 
-    print(f'✅ Exported {len(articles)} articles to {output_path}')
+    print(f"✅ Exported {len(articles)} articles to {output_path}")
 
 
 def get_statistics(articles: list[KnowledgeArticle]) -> dict[str, Any]:
@@ -536,11 +564,10 @@ def get_statistics(articles: list[KnowledgeArticle]) -> dict[str, Any]:
             incomplete_count += 1
 
     return {
-        'total_articles': len(articles),
-        'categories': dict(sorted(categories.items())),
-        'tags': dict(sorted(tags.items(), key=lambda x: x[1], reverse=True)),
-        'internal_only_count': internal_count,
-        'incomplete_count': incomplete_count,
-        'complete_public_count': len(articles) - internal_count - incomplete_count
+        "total_articles": len(articles),
+        "categories": dict(sorted(categories.items())),
+        "tags": dict(sorted(tags.items(), key=lambda x: x[1], reverse=True)),
+        "internal_only_count": internal_count,
+        "incomplete_count": incomplete_count,
+        "complete_public_count": len(articles) - internal_count - incomplete_count,
     }
-

@@ -248,4 +248,3 @@ class PylonWebhookTimestampError(PylonWebhookError):
         self.timestamp = timestamp
         self.tolerance_seconds = tolerance_seconds
         super().__init__(message)
-

@@ -33,11 +33,13 @@ from .models import (
 
 class PylonAPIError(Exception):
     """Exception raised for Pylon API errors."""
+
     pass
 
 
 class PylonRateLimitError(PylonAPIError):
     """Exception raised when rate limit is exceeded."""
+
     pass
 
 
@@ -73,27 +75,33 @@ class PylonClient:
         Raises:
             ValueError: If no API key is provided or found in environment.
         """
-        self.api_key = api_key or os.getenv('PYLON_API_KEY')
+        self.api_key = api_key or os.getenv("PYLON_API_KEY")
         if not self.api_key:
-            raise ValueError("Pylon API key must be provided or set in PYLON_API_KEY environment variable")
+            raise ValueError(
+                "Pylon API key must be provided or set in PYLON_API_KEY environment variable"
+            )
 
         self.session = requests.Session()
         self.timeout = timeout
-        self.session.headers.update({
-            'Authorization': f'Bearer {self.api_key}',
-            'Content-Type': 'application/json'
-        })
+        self.session.headers.update(
+            {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+        )
 
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_exponential(multiplier=2, min=4, max=60),
-        retry=retry_if_exception_type((requests.exceptions.RequestException, PylonRateLimitError))
+        retry=retry_if_exception_type(
+            (requests.exceptions.RequestException, PylonRateLimitError)
+        ),
     )
     def _make_request(
         self,
         endpoint: str,
         params: dict[str, Any] | None = None,
-        method: str = 'GET',
+        method: str = "GET",
         data: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make a request to the Pylon API with retry logic.
@@ -112,10 +120,14 @@ class PylonClient:
         """
         url = f"{self.BASE_URL}{endpoint}"
 
-        if method == 'POST':
-            response = self.session.post(url, json=data, params=params, timeout=self.timeout)
-        elif method == 'PATCH':
-            response = self.session.patch(url, json=data, params=params, timeout=self.timeout)
+        if method == "POST":
+            response = self.session.post(
+                url, json=data, params=params, timeout=self.timeout
+            )
+        elif method == "PATCH":
+            response = self.session.patch(
+                url, json=data, params=params, timeout=self.timeout
+            )
         else:
             response = self.session.get(url, params=params, timeout=self.timeout)
 
@@ -129,7 +141,9 @@ class PylonClient:
 
         return response.json()
 
-    def _paginate(self, endpoint: str, params: dict[str, Any] | None = None, delay: float = 0.5) -> Iterator[dict[str, Any]]:
+    def _paginate(
+        self, endpoint: str, params: dict[str, Any] | None = None, delay: float = 0.5
+    ) -> Iterator[dict[str, Any]]:
         """
         Paginate through API results using cursor-based pagination.
 
@@ -148,7 +162,7 @@ class PylonClient:
 
         while True:
             if cursor:
-                params['cursor'] = cursor
+                params["cursor"] = cursor
 
             response_data = self._make_request(endpoint, params)
             response = PylonResponse(**response_data)
@@ -171,7 +185,7 @@ class PylonClient:
         start_time: datetime | None = None,
         end_time: datetime | None = None,
         days: int | None = None,
-        limit: int | None = None
+        limit: int | None = None,
     ) -> Iterator[PylonIssue]:
         """
         Get issues from Pylon.
@@ -201,14 +215,14 @@ class PylonClient:
                 start_time = end_time - timedelta(days=30)
 
         params = {
-            'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
-            'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "end_time": end_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
 
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        for item in self._paginate('/issues', params):
+        for item in self._paginate("/issues", params):
             yield PylonIssue.from_pylon_dict(item)
 
     def get_issue_by_number(self, number: int) -> PylonIssue | None:
@@ -229,7 +243,7 @@ class PylonClient:
                 print(f"Found: {issue.title}")
         """
         try:
-            response = self._make_request(f'/issues/{number}', method='GET')
+            response = self._make_request(f"/issues/{number}", method="GET")
             data = response.get("data", response)
             return PylonIssue.from_pylon_dict(data)
         except PylonAPIError as e:
@@ -316,20 +330,22 @@ class PylonClient:
                 "limit": limit or 100,
             }
 
-        response = self._make_request('/issues/search', method='POST', data=payload)
+        response = self._make_request("/issues/search", method="POST", data=payload)
 
         # Handle paginated response
-        if 'data' in response:
-            for item in response['data']:
+        if "data" in response:
+            for item in response["data"]:
                 yield PylonIssue.from_pylon_dict(item)
 
             # Handle pagination if there are more results
-            while response.get('pagination', {}).get('has_next_page'):
-                cursor = response['pagination']['cursor']
-                payload['cursor'] = cursor
-                response = self._make_request('/issues/search', method='POST', data=payload)
-                if 'data' in response:
-                    for item in response['data']:
+            while response.get("pagination", {}).get("has_next_page"):
+                cursor = response["pagination"]["cursor"]
+                payload["cursor"] = cursor
+                response = self._make_request(
+                    "/issues/search", method="POST", data=payload
+                )
+                if "data" in response:
+                    for item in response["data"]:
                         yield PylonIssue.from_pylon_dict(item)
 
     def get_tags(self, limit: int | None = None) -> Iterator[PylonTag]:
@@ -344,9 +360,9 @@ class PylonClient:
         """
         params = {}
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        for item in self._paginate('/tags', params):
+        for item in self._paginate("/tags", params):
             yield PylonTag.from_pylon_dict(item)
 
     def get_accounts(self, limit: int | None = None) -> Iterator[PylonAccount]:
@@ -361,9 +377,9 @@ class PylonClient:
         """
         params = {}
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        for item in self._paginate('/accounts', params):
+        for item in self._paginate("/accounts", params):
             yield PylonAccount.from_pylon_dict(item)
 
     def get_account(self, account_id: str) -> PylonAccount:
@@ -379,13 +395,15 @@ class PylonClient:
         Raises:
             PylonAPIError: If the account is not found or API error occurs
         """
-        response = self._make_request(f'/accounts/{account_id}')
+        response = self._make_request(f"/accounts/{account_id}")
         # Single entity responses are wrapped in 'data'
-        if 'data' in response:
-            return PylonAccount.from_pylon_dict(response['data'])
+        if "data" in response:
+            return PylonAccount.from_pylon_dict(response["data"])
         return PylonAccount.from_pylon_dict(response)
 
-    def search_accounts_by_custom_field(self, field_slug: str, value: str) -> Iterator[PylonAccount]:
+    def search_accounts_by_custom_field(
+        self, field_slug: str, value: str
+    ) -> Iterator[PylonAccount]:
         """
         Search for accounts by custom field value using Pylon's search API.
 
@@ -408,28 +426,26 @@ class PylonClient:
                 print(f"Found: {account.name}")
         """
         payload = {
-            "filter": {
-                "field": field_slug,
-                "operator": "equals",
-                "value": value
-            },
-            "limit": 100
+            "filter": {"field": field_slug, "operator": "equals", "value": value},
+            "limit": 100,
         }
 
-        response = self._make_request('/accounts/search', method='POST', data=payload)
+        response = self._make_request("/accounts/search", method="POST", data=payload)
 
         # Handle paginated response
-        if 'data' in response:
-            for item in response['data']:
+        if "data" in response:
+            for item in response["data"]:
                 yield PylonAccount.from_pylon_dict(item)
 
             # Handle pagination if there are more results
-            while response.get('pagination', {}).get('has_next_page'):
-                cursor = response['pagination']['cursor']
-                payload['cursor'] = cursor
-                response = self._make_request('/accounts/search', method='POST', data=payload)
-                if 'data' in response:
-                    for item in response['data']:
+            while response.get("pagination", {}).get("has_next_page"):
+                cursor = response["pagination"]["cursor"]
+                payload["cursor"] = cursor
+                response = self._make_request(
+                    "/accounts/search", method="POST", data=payload
+                )
+                if "data" in response:
+                    for item in response["data"]:
                         yield PylonAccount.from_pylon_dict(item)
 
     def get_contacts(self, limit: int | None = None) -> Iterator[PylonContact]:
@@ -444,9 +460,9 @@ class PylonClient:
         """
         params = {}
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        for item in self._paginate('/contacts', params):
+        for item in self._paginate("/contacts", params):
             yield PylonContact.from_pylon_dict(item)
 
     def get_contact(self, contact_id: str) -> PylonContact:
@@ -462,10 +478,10 @@ class PylonClient:
         Raises:
             PylonAPIError: If the contact is not found or API error occurs
         """
-        response = self._make_request(f'/contacts/{contact_id}')
+        response = self._make_request(f"/contacts/{contact_id}")
         # Single entity responses are wrapped in 'data'
-        if 'data' in response:
-            return PylonContact.from_pylon_dict(response['data'])
+        if "data" in response:
+            return PylonContact.from_pylon_dict(response["data"])
         return PylonContact.from_pylon_dict(response)
 
     def get_users(self, limit: int | None = None) -> Iterator[PylonUser]:
@@ -480,9 +496,9 @@ class PylonClient:
         """
         params = {}
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        for item in self._paginate('/users', params):
+        for item in self._paginate("/users", params):
             yield PylonUser.from_pylon_dict(item)
 
     def get_user(self, user_id: str) -> PylonUser:
@@ -500,10 +516,10 @@ class PylonClient:
         Raises:
             PylonAPIError: If the user is not found or API error occurs
         """
-        response = self._make_request(f'/users/{user_id}')
+        response = self._make_request(f"/users/{user_id}")
         # Single entity responses are wrapped in 'data'
-        if 'data' in response:
-            return PylonUser.from_pylon_dict(response['data'])
+        if "data" in response:
+            return PylonUser.from_pylon_dict(response["data"])
         return PylonUser.from_pylon_dict(response)
 
     def get_teams(self, limit: int | None = None) -> Iterator[PylonTeam]:
@@ -518,12 +534,14 @@ class PylonClient:
         """
         params = {}
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        for item in self._paginate('/teams', params):
+        for item in self._paginate("/teams", params):
             yield PylonTeam.from_pylon_dict(item)
 
-    def get_messages(self, issue_id: str, limit: int | None = None) -> list[PylonMessage]:
+    def get_messages(
+        self, issue_id: str, limit: int | None = None
+    ) -> list[PylonMessage]:
         """
         Get messages for a specific issue.
 
@@ -536,17 +554,19 @@ class PylonClient:
         """
         params = {}
         if limit:
-            params['limit'] = limit
+            params["limit"] = limit
 
-        response = self._make_request(f'/issues/{issue_id}/messages', params=params)
+        response = self._make_request(f"/issues/{issue_id}/messages", params=params)
         messages = []
 
-        if 'data' in response:
-            for item in response['data']:
+        if "data" in response:
+            for item in response["data"]:
                 try:
                     messages.append(PylonMessage.from_pylon_dict(item))
                 except Exception as e:
-                    print(f"Warning: Failed to parse message {item.get('id', 'unknown')}: {e}")
+                    print(
+                        f"Warning: Failed to parse message {item.get('id', 'unknown')}: {e}"
+                    )
                     continue
 
         return messages
@@ -592,11 +612,13 @@ class PylonClient:
         if not payload:
             raise ValueError("update_issue called with empty payload")
 
-        response = self._make_request(f'/issues/{issue_id}', method='PATCH', data=payload)
+        response = self._make_request(
+            f"/issues/{issue_id}", method="PATCH", data=payload
+        )
 
         # Single-entity responses are wrapped in "data" according to the
         # Pylon API docs; fall back to top-level JSON for robustness.
-        data = response.get('data', response)
+        data = response.get("data", response)
         return PylonIssue.from_pylon_dict(data)
 
     def get_attachments(self, issue_id: str) -> list[PylonAttachment]:
@@ -627,4 +649,3 @@ class PylonClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-

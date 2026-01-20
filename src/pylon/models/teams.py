@@ -58,4 +58,3 @@ class PylonTeam(BaseModel):
             A PylonTeam instance.
         """
         return cls.model_validate(data)
-

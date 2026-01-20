@@ -244,4 +244,3 @@ class BaseAsyncResource(ABC, Generic[T]):
         """
         items = data.get("data", [])
         return [self._model.model_validate(item) for item in items]
-

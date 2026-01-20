@@ -145,4 +145,3 @@ class PylonIssue(BaseModel):
             data["custom_fields"] = custom_fields
 
         return cls.model_validate(data)
-

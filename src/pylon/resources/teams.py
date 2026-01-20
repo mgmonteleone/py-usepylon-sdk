@@ -137,4 +137,3 @@ class AsyncTeamsResource(BaseAsyncResource[PylonTeam]):
         response = await self._post(self._endpoint, data=data)
         result = response.get("data", response)
         return PylonTeam.from_pylon_dict(result)
-

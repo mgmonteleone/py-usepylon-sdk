@@ -128,4 +128,3 @@ class AsyncTagsResource(BaseAsyncResource[PylonTag]):
         response = await self._post(self._endpoint, data=data)
         result = response.get("data", response)
         return PylonTag.from_pylon_dict(result)
-

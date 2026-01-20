@@ -204,4 +204,3 @@ class AsyncContactsResource(BaseAsyncResource[PylonContact]):
         response = await self._patch(f"{self._endpoint}/{contact_id}", data=kwargs)
         data = response.get("data", response)
         return PylonContact.from_pylon_dict(data)
-

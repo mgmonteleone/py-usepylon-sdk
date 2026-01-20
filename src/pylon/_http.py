@@ -443,4 +443,3 @@ class AsyncHTTPTransport(BaseHTTPTransport):
     ) -> None:
         """Async context manager exit."""
         await self.aclose()
-

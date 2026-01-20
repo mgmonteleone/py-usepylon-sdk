@@ -42,9 +42,7 @@ class TestPylonAPIError:
 
     def test_stores_request_id(self):
         """PylonAPIError should store optional request ID."""
-        error = PylonAPIError(
-            status_code=500, message="Error", request_id="req_123"
-        )
+        error = PylonAPIError(status_code=500, message="Error", request_id="req_123")
         assert error.request_id == "req_123"
 
     def test_str_representation(self):
@@ -142,4 +140,3 @@ class TestPylonServerError:
         """PylonServerError should accept custom 5xx status codes."""
         error = PylonServerError(status_code=502)
         assert error.status_code == 502
-
