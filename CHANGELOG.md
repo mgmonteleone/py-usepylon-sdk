@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-20
+
+### Added
+- Comprehensive test suite achieving 80% code coverage (269 tests)
+- Integration tests for all resources (issues, accounts, contacts, teams, users, tags, tasks, projects, audit logs, attachments, knowledge bases, messages)
+- Unit tests for models, pagination, and filters
+- MkDocs documentation setup with Material theme
+- API reference documentation (`docs/api/`)
+- Getting started guides (`docs/getting-started/`)
+- User guides for clients, errors, filtering, pagination, webhooks (`docs/guide/`)
+- Example scripts for basic usage, async operations, webhooks, and filters
+- Automated documentation deployment to GitHub Pages (#44)
+
+### Fixed
+- `EventHandler` type in webhooks for mypy compatibility
+- Optional field assertions in unit tests
+
 ## [0.4.0] - 2026-01-20
 
 ### Added
@@ -76,7 +93,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic retry with exponential backoff
 - Comprehensive error handling
 
-[Unreleased]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.1.0...v0.2.0

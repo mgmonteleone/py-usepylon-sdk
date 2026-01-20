@@ -4,7 +4,7 @@ argument-hint: <issue-number> [branch-name]
 model: claude-opus-4-5
 ---
 
-Activate the foreman agent to implement GitHub issue $ARGUMENTS.
+Activate the foreman agent to implement GyesitHub issue $ARGUMENTS.
 
 If you do not recieve a issue number or numbers, then look at the github issue list and present the user with
 a list of issues with suggestions as to what could be implemented next. then pass this to the foreman agent.
