@@ -183,3 +183,69 @@ class PylonServerError(PylonAPIError):
         """
         super().__init__(status_code, message, request_id)
 
+
+class PylonWebhookError(PylonError):
+    """Base exception for webhook-related errors.
+
+    This exception is raised when there's an issue processing a webhook.
+    """
+
+    def __init__(self, message: str) -> None:
+        """Initialize a PylonWebhookError.
+
+        Args:
+            message: Description of the webhook error.
+        """
+        self.message = message
+        super().__init__(message)
+
+
+class PylonWebhookSignatureError(PylonWebhookError):
+    """Raised when webhook signature verification fails.
+
+    This indicates that the webhook payload signature does not match
+    the expected signature, which could indicate tampering or an
+    incorrect webhook secret.
+    """
+
+    def __init__(
+        self,
+        message: str = "Webhook signature verification failed",
+    ) -> None:
+        """Initialize a PylonWebhookSignatureError.
+
+        Args:
+            message: Error message describing the signature failure.
+        """
+        super().__init__(message)
+
+
+class PylonWebhookTimestampError(PylonWebhookError):
+    """Raised when webhook timestamp validation fails.
+
+    This indicates that the webhook timestamp is outside the acceptable
+    time window, which could indicate a replay attack or significant
+    clock skew.
+
+    Attributes:
+        timestamp: The timestamp from the webhook (if available).
+        tolerance_seconds: The maximum allowed time difference.
+    """
+
+    def __init__(
+        self,
+        message: str = "Webhook timestamp validation failed",
+        timestamp: str | None = None,
+        tolerance_seconds: int | None = None,
+    ) -> None:
+        """Initialize a PylonWebhookTimestampError.
+
+        Args:
+            message: Error message describing the timestamp failure.
+            timestamp: The timestamp from the webhook header.
+            tolerance_seconds: The allowed tolerance in seconds.
+        """
+        self.timestamp = timestamp
+        self.tolerance_seconds = tolerance_seconds
+        super().__init__(message)
+
