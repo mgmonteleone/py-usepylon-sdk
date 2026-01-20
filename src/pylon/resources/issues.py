@@ -215,7 +215,9 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             The updated PylonIssue instance.
         """
         if isinstance(until, datetime):
-            until_str = until.strftime("%Y-%m-%dT%H:%M:%SZ")
+            # Normalize to UTC before formatting (naive datetimes assumed to be UTC)
+            until_utc = until.astimezone(UTC) if until.tzinfo is not None else until
+            until_str = until_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         else:
             until_str = until
         response = self._post(
@@ -441,7 +443,9 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             The updated PylonIssue instance.
         """
         if isinstance(until, datetime):
-            until_str = until.strftime("%Y-%m-%dT%H:%M:%SZ")
+            # Normalize to UTC before formatting (naive datetimes assumed to be UTC)
+            until_utc = until.astimezone(UTC) if until.tzinfo is not None else until
+            until_str = until_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         else:
             until_str = until
         response = await self._post(
