@@ -22,7 +22,7 @@ def main():
         print("Please set PYLON_API_KEY environment variable")
         return
 
-    with PylonClient(api_key=api_key) as _client:  # noqa: F841
+    with PylonClient(api_key=api_key) as _client:
         demonstrate_filters()
 
 
