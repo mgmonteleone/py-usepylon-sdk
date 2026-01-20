@@ -51,3 +51,6 @@ htmlcov/
 .env
 .env.local
 
+# MkDocs
+site/
+
