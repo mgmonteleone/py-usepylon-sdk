@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import AsyncIterator, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pylon.models import PylonTeam
 from pylon.resources._base import BaseAsyncResource, BaseSyncResource
@@ -33,6 +34,47 @@ class TeamsResource(BaseSyncResource[PylonTeam]):
         )
         yield from paginator.iter()
 
+    def get(self, team_id: str) -> PylonTeam:
+        """Get a specific team by ID.
+
+        Args:
+            team_id: The team ID.
+
+        Returns:
+            The PylonTeam instance.
+        """
+        response = self._get(f"{self._endpoint}/{team_id}")
+        data = response.get("data", response)
+        return PylonTeam.from_pylon_dict(data)
+
+    def create(
+        self,
+        *,
+        name: str,
+        description: str | None = None,
+        members: builtins.list[str] | None = None,
+        **kwargs: Any,
+    ) -> PylonTeam:
+        """Create a new team.
+
+        Args:
+            name: Team name.
+            description: Team description.
+            members: List of user IDs or emails to add.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonTeam instance.
+        """
+        data: dict[str, Any] = {"name": name, **kwargs}
+        if description:
+            data["description"] = description
+        if members:
+            data["members"] = members
+        response = self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonTeam.from_pylon_dict(result)
+
 
 class AsyncTeamsResource(BaseAsyncResource[PylonTeam]):
     """Asynchronous resource for managing Pylon teams."""
@@ -54,4 +96,45 @@ class AsyncTeamsResource(BaseAsyncResource[PylonTeam]):
         )
         async for team in paginator:
             yield team
+
+    async def get(self, team_id: str) -> PylonTeam:
+        """Get a specific team by ID asynchronously.
+
+        Args:
+            team_id: The team ID.
+
+        Returns:
+            The PylonTeam instance.
+        """
+        response = await self._get(f"{self._endpoint}/{team_id}")
+        data = response.get("data", response)
+        return PylonTeam.from_pylon_dict(data)
+
+    async def create(
+        self,
+        *,
+        name: str,
+        description: str | None = None,
+        members: builtins.list[str] | None = None,
+        **kwargs: Any,
+    ) -> PylonTeam:
+        """Create a new team asynchronously.
+
+        Args:
+            name: Team name.
+            description: Team description.
+            members: List of user IDs or emails to add.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonTeam instance.
+        """
+        data: dict[str, Any] = {"name": name, **kwargs}
+        if description:
+            data["description"] = description
+        if members:
+            data["members"] = members
+        response = await self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonTeam.from_pylon_dict(result)
 

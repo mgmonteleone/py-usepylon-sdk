@@ -17,8 +17,17 @@ from pylon._http import (
     SyncHTTPTransport,
 )
 from pylon.resources.accounts import AccountsResource, AsyncAccountsResource
+from pylon.resources.attachments import (
+    AsyncAttachmentsResource,
+    AttachmentsResource,
+)
 from pylon.resources.contacts import AsyncContactsResource, ContactsResource
 from pylon.resources.issues import AsyncIssuesResource, IssuesResource
+from pylon.resources.knowledge_base import (
+    AsyncKnowledgeBaseResource,
+    KnowledgeBaseResource,
+)
+from pylon.resources.messages import AsyncMessagesResource, MessagesResource
 from pylon.resources.tags import AsyncTagsResource, TagsResource
 from pylon.resources.teams import AsyncTeamsResource, TeamsResource
 from pylon.resources.users import AsyncUsersResource, UsersResource
@@ -54,6 +63,9 @@ class PylonClient:
         users: Resource for managing users.
         teams: Resource for managing teams.
         tags: Resource for managing tags.
+        messages: Resource for managing issue messages.
+        attachments: Resource for managing attachments.
+        knowledge_bases: Resource for managing knowledge bases.
     """
 
     def __init__(
@@ -96,6 +108,9 @@ class PylonClient:
         self._users = UsersResource(self._transport)
         self._teams = TeamsResource(self._transport)
         self._tags = TagsResource(self._transport)
+        self._messages = MessagesResource(self._transport)
+        self._attachments = AttachmentsResource(self._transport)
+        self._knowledge_bases = KnowledgeBaseResource(self._transport)
 
     @property
     def issues(self) -> IssuesResource:
@@ -126,6 +141,21 @@ class PylonClient:
     def tags(self) -> TagsResource:
         """Access the tags resource."""
         return self._tags
+
+    @property
+    def messages(self) -> MessagesResource:
+        """Access the messages resource."""
+        return self._messages
+
+    @property
+    def attachments(self) -> AttachmentsResource:
+        """Access the attachments resource."""
+        return self._attachments
+
+    @property
+    def knowledge_bases(self) -> KnowledgeBaseResource:
+        """Access the knowledge bases resource."""
+        return self._knowledge_bases
 
     def close(self) -> None:
         """Close the client and release resources."""
@@ -169,6 +199,9 @@ class AsyncPylonClient:
         users: Async resource for managing users.
         teams: Async resource for managing teams.
         tags: Async resource for managing tags.
+        messages: Async resource for managing issue messages.
+        attachments: Async resource for managing attachments.
+        knowledge_bases: Async resource for managing knowledge bases.
     """
 
     def __init__(
@@ -211,6 +244,9 @@ class AsyncPylonClient:
         self._users = AsyncUsersResource(self._transport)
         self._teams = AsyncTeamsResource(self._transport)
         self._tags = AsyncTagsResource(self._transport)
+        self._messages = AsyncMessagesResource(self._transport)
+        self._attachments = AsyncAttachmentsResource(self._transport)
+        self._knowledge_bases = AsyncKnowledgeBaseResource(self._transport)
 
     @property
     def issues(self) -> AsyncIssuesResource:
@@ -241,6 +277,21 @@ class AsyncPylonClient:
     def tags(self) -> AsyncTagsResource:
         """Access the async tags resource."""
         return self._tags
+
+    @property
+    def messages(self) -> AsyncMessagesResource:
+        """Access the async messages resource."""
+        return self._messages
+
+    @property
+    def attachments(self) -> AsyncAttachmentsResource:
+        """Access the async attachments resource."""
+        return self._attachments
+
+    @property
+    def knowledge_bases(self) -> AsyncKnowledgeBaseResource:
+        """Access the async knowledge bases resource."""
+        return self._knowledge_bases
 
     async def aclose(self) -> None:
         """Close the async client and release resources."""

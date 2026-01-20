@@ -9,6 +9,7 @@ from pylon.models.attachments import PylonAttachment
 from pylon.models.base import PylonCustomFieldValue, PylonReference
 from pylon.models.contacts import PylonContact
 from pylon.models.issues import PylonIssue, PylonSlackInfoForIssues
+from pylon.models.knowledge_base import PylonKnowledgeBase, PylonKnowledgeBaseArticle
 from pylon.models.messages import (
     PylonEmailInfo,
     PylonMessage,
@@ -42,6 +43,9 @@ __all__ = [
     "PylonSlackInfoForMessages",
     # Attachment models
     "PylonAttachment",
+    # Knowledge base models
+    "PylonKnowledgeBase",
+    "PylonKnowledgeBaseArticle",
     # User models
     "PylonUser",
     # Team models

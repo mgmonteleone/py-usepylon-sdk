@@ -133,6 +133,97 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
         data = response.get("data", response)
         return PylonIssue.from_pylon_dict(data)
 
+    def create(
+        self,
+        *,
+        title: str,
+        description: str,
+        status: str = "open",
+        priority: str = "medium",
+        assignee: str | None = None,
+        **kwargs: Any,
+    ) -> PylonIssue:
+        """Create a new issue.
+
+        Args:
+            title: Issue title.
+            description: Issue description.
+            status: Issue status (default: "open").
+            priority: Issue priority (default: "medium").
+            assignee: Optional assignee user ID or email.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonIssue instance.
+        """
+        data = {
+            "title": title,
+            "description": description,
+            "status": status,
+            "priority": priority,
+            **kwargs,
+        }
+        if assignee:
+            data["assignee"] = assignee
+        response = self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonIssue.from_pylon_dict(result)
+
+    def search(
+        self,
+        query: str,
+        *,
+        filters: dict[str, Any] | None = None,
+        limit: int = 100,
+    ) -> Iterator[PylonIssue]:
+        """Search for issues.
+
+        Args:
+            query: Search query string.
+            filters: Additional filters as key-value pairs.
+            limit: Maximum number of results.
+
+        Yields:
+            Matching PylonIssue instances.
+        """
+        payload: dict[str, Any] = {"query": query, "limit": limit}
+        if filters:
+            payload["filters"] = filters
+
+        response = self._post(f"{self._endpoint}/search", data=payload)
+        items = response.get("data", [])
+        for item in items:
+            yield PylonIssue.from_pylon_dict(item)
+
+        # Handle pagination
+        while response.get("pagination", {}).get("has_next_page"):
+            cursor = response["pagination"]["cursor"]
+            payload["cursor"] = cursor
+            response = self._post(f"{self._endpoint}/search", data=payload)
+            items = response.get("data", [])
+            for item in items:
+                yield PylonIssue.from_pylon_dict(item)
+
+    def snooze(self, issue_id: str, *, until: datetime | str) -> PylonIssue:
+        """Snooze an issue until a specific date/time.
+
+        Args:
+            issue_id: The issue ID to snooze.
+            until: Date/time when issue should reappear (ISO 8601 or datetime).
+
+        Returns:
+            The updated PylonIssue instance.
+        """
+        if isinstance(until, datetime):
+            until_str = until.strftime("%Y-%m-%dT%H:%M:%SZ")
+        else:
+            until_str = until
+        response = self._post(
+            f"{self._endpoint}/{issue_id}/snooze", data={"until": until_str}
+        )
+        data = response.get("data", response)
+        return PylonIssue.from_pylon_dict(data)
+
     def messages(
         self, issue_id: str, limit: int | None = None
     ) -> builtins.list[PylonMessage]:
@@ -265,6 +356,97 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             The updated PylonIssue instance.
         """
         response = await self._patch(f"{self._endpoint}/{issue_id}", data=kwargs)
+        data = response.get("data", response)
+        return PylonIssue.from_pylon_dict(data)
+
+    async def create(
+        self,
+        *,
+        title: str,
+        description: str,
+        status: str = "open",
+        priority: str = "medium",
+        assignee: str | None = None,
+        **kwargs: Any,
+    ) -> PylonIssue:
+        """Create a new issue asynchronously.
+
+        Args:
+            title: Issue title.
+            description: Issue description.
+            status: Issue status (default: "open").
+            priority: Issue priority (default: "medium").
+            assignee: Optional assignee user ID or email.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonIssue instance.
+        """
+        data = {
+            "title": title,
+            "description": description,
+            "status": status,
+            "priority": priority,
+            **kwargs,
+        }
+        if assignee:
+            data["assignee"] = assignee
+        response = await self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonIssue.from_pylon_dict(result)
+
+    async def search(
+        self,
+        query: str,
+        *,
+        filters: dict[str, Any] | None = None,
+        limit: int = 100,
+    ) -> AsyncIterator[PylonIssue]:
+        """Search for issues asynchronously.
+
+        Args:
+            query: Search query string.
+            filters: Additional filters as key-value pairs.
+            limit: Maximum number of results.
+
+        Yields:
+            Matching PylonIssue instances.
+        """
+        payload: dict[str, Any] = {"query": query, "limit": limit}
+        if filters:
+            payload["filters"] = filters
+
+        response = await self._post(f"{self._endpoint}/search", data=payload)
+        items = response.get("data", [])
+        for item in items:
+            yield PylonIssue.from_pylon_dict(item)
+
+        # Handle pagination
+        while response.get("pagination", {}).get("has_next_page"):
+            cursor = response["pagination"]["cursor"]
+            payload["cursor"] = cursor
+            response = await self._post(f"{self._endpoint}/search", data=payload)
+            items = response.get("data", [])
+            for item in items:
+                yield PylonIssue.from_pylon_dict(item)
+
+    async def snooze(self, issue_id: str, *, until: datetime | str) -> PylonIssue:
+        """Snooze an issue until a specific date/time asynchronously.
+
+        Args:
+            issue_id: The issue ID to snooze.
+            until: Date/time when issue should reappear (ISO 8601 or datetime).
+
+        Returns:
+            The updated PylonIssue instance.
+        """
+        if isinstance(until, datetime):
+            until_str = until.strftime("%Y-%m-%dT%H:%M:%SZ")
+        else:
+            until_str = until
+        response = await self._post(
+            f"{self._endpoint}/{issue_id}/snooze", data={"until": until_str}
+        )
         data = response.get("data", response)
         return PylonIssue.from_pylon_dict(data)
 

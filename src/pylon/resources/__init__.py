@@ -7,8 +7,17 @@ interacting with specific Pylon API endpoints.
 from pylon.resources._base import BaseAsyncResource, BaseSyncResource
 from pylon.resources._pagination import AsyncPaginator, SyncPaginator
 from pylon.resources.accounts import AccountsResource, AsyncAccountsResource
+from pylon.resources.attachments import (
+    AsyncAttachmentsResource,
+    AttachmentsResource,
+)
 from pylon.resources.contacts import AsyncContactsResource, ContactsResource
 from pylon.resources.issues import AsyncIssuesResource, IssuesResource
+from pylon.resources.knowledge_base import (
+    AsyncKnowledgeBaseResource,
+    KnowledgeBaseResource,
+)
+from pylon.resources.messages import AsyncMessagesResource, MessagesResource
 from pylon.resources.tags import AsyncTagsResource, TagsResource
 from pylon.resources.teams import AsyncTeamsResource, TeamsResource
 from pylon.resources.users import AsyncUsersResource, UsersResource
@@ -27,6 +36,9 @@ __all__ = [
     "UsersResource",
     "TeamsResource",
     "TagsResource",
+    "MessagesResource",
+    "AttachmentsResource",
+    "KnowledgeBaseResource",
     # Async resources
     "AsyncIssuesResource",
     "AsyncAccountsResource",
@@ -34,5 +46,8 @@ __all__ = [
     "AsyncUsersResource",
     "AsyncTeamsResource",
     "AsyncTagsResource",
+    "AsyncMessagesResource",
+    "AsyncAttachmentsResource",
+    "AsyncKnowledgeBaseResource",
 ]
 

@@ -115,6 +115,44 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             for item in items:
                 yield PylonAccount.from_pylon_dict(item)
 
+    def create(
+        self,
+        *,
+        name: str,
+        domain: str | None = None,
+        **kwargs: Any,
+    ) -> PylonAccount:
+        """Create a new account.
+
+        Args:
+            name: Account name.
+            domain: Primary domain for the account.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonAccount instance.
+        """
+        data: dict[str, Any] = {"name": name, **kwargs}
+        if domain:
+            data["domain"] = domain
+        response = self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonAccount.from_pylon_dict(result)
+
+    def update(self, account_id: str, **kwargs: Any) -> PylonAccount:
+        """Update an account.
+
+        Args:
+            account_id: The account ID to update.
+            **kwargs: Fields to update.
+
+        Returns:
+            The updated PylonAccount instance.
+        """
+        response = self._patch(f"{self._endpoint}/{account_id}", data=kwargs)
+        data = response.get("data", response)
+        return PylonAccount.from_pylon_dict(data)
+
 
 class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
     """Asynchronous resource for managing Pylon accounts.
@@ -214,3 +252,40 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             for item in items:
                 yield PylonAccount.from_pylon_dict(item)
 
+    async def create(
+        self,
+        *,
+        name: str,
+        domain: str | None = None,
+        **kwargs: Any,
+    ) -> PylonAccount:
+        """Create a new account asynchronously.
+
+        Args:
+            name: Account name.
+            domain: Primary domain for the account.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonAccount instance.
+        """
+        data: dict[str, Any] = {"name": name, **kwargs}
+        if domain:
+            data["domain"] = domain
+        response = await self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonAccount.from_pylon_dict(result)
+
+    async def update(self, account_id: str, **kwargs: Any) -> PylonAccount:
+        """Update an account asynchronously.
+
+        Args:
+            account_id: The account ID to update.
+            **kwargs: Fields to update.
+
+        Returns:
+            The updated PylonAccount instance.
+        """
+        response = await self._patch(f"{self._endpoint}/{account_id}", data=kwargs)
+        data = response.get("data", response)
+        return PylonAccount.from_pylon_dict(data)
