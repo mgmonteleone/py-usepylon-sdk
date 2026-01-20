@@ -112,7 +112,7 @@ class RichModelMixin:
         """
         # Get model fields from the class (not instance) per Pydantic v2.11+
         if hasattr(self.__class__, "model_fields"):
-            for field_name in self.__class__.model_fields:
+            for field_name in self.__class__.model_fields:  # type: ignore[attr-defined]
                 setattr(self, field_name, getattr(other, field_name))
 
     def _copy_client_binding(self: T, other: RichModelMixin) -> T:
@@ -124,8 +124,8 @@ class RichModelMixin:
         Returns:
             Self for method chaining.
         """
-        self._sync_client = other._sync_client  # type: ignore[attr-defined]
-        self._async_client = other._async_client  # type: ignore[attr-defined]
+        self._sync_client = other._sync_client
+        self._async_client = other._async_client
         return self
 
 
