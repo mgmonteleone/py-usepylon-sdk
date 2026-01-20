@@ -12,18 +12,26 @@ theme:
     - navigation.sections
     - navigation.expand
     - navigation.top
+    - navigation.instant
+    - navigation.tracking
     - content.code.copy
     - content.code.annotate
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
     - scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -75,9 +83,19 @@ markdown_extensions:
   - tables
 
 extra:
+  generator: false
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/mgmonteleone/py-usepylon-sdk
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/py-usepylon-sdk/
+
+extra_css:
+  - stylesheets/extra.css
+
+copyright: |
+  Copyright &copy; 2024-2026 Matthew G. Monteleone<br>
+  <a href="https://www.augmentcode.com" class="built-with-auggie" target="_blank">
+    ✨ Built with Auggie
+  </a>
 

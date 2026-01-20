@@ -5,6 +5,8 @@
 [![Tests](https://github.com/mgmonteleone/py-usepylon-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/mgmonteleone/py-usepylon-sdk/actions)
 [![Coverage](https://img.shields.io/codecov/c/github/mgmonteleone/py-usepylon-sdk)](https://codecov.io/gh/mgmonteleone/py-usepylon-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://mgmonteleone.github.io/py-usepylon-sdk/)
+[![Built with Auggie](https://img.shields.io/badge/Built%20with-Auggie-3D855E?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHptLTEtMTNoMnY2aC0yem0wIDhoMnYyaC0yeiIvPjwvc3ZnPg==)](https://www.augmentcode.com)
 
 A modern, fully-typed Python SDK for the [Pylon](https://usepylon.com) customer support API.
 
