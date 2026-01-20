@@ -52,4 +52,3 @@ class PylonProject(BaseModel):
             A PylonProject instance.
         """
         return cls.model_validate(data)
-

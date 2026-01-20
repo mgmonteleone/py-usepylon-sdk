@@ -165,4 +165,3 @@ class PylonMessage(BaseModel):
             del parsed_data["file_urls"]
 
         return cls.model_validate(parsed_data)
-

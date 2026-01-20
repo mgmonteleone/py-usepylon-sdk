@@ -224,4 +224,3 @@ class AsyncKnowledgeBaseResource(BaseAsyncResource[PylonKnowledgeBase]):
         response = await self._post(f"{self._endpoint}/{kb_id}/articles", data=data)
         result = response.get("data", response)
         return PylonKnowledgeBaseArticle.from_pylon_dict(result)
-

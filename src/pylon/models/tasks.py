@@ -60,4 +60,3 @@ class PylonTask(BaseModel):
             A PylonTask instance.
         """
         return cls.model_validate(data)
-

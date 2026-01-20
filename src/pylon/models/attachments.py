@@ -50,4 +50,3 @@ class PylonAttachment(BaseModel):
             A PylonAttachment instance.
         """
         return cls.model_validate(data)
-

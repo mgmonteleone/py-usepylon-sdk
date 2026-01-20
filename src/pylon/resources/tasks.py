@@ -190,4 +190,3 @@ class AsyncTasksResource(BaseAsyncResource[PylonTask]):
         response = await self._patch(f"{self._endpoint}/{task_id}", data=kwargs)
         data = response.get("data", response)
         return PylonTask.from_pylon_dict(data)
-

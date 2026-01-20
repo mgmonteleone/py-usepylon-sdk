@@ -49,4 +49,3 @@ class PylonCustomFieldValue(BaseModel):
         default=None,
         description="For multi-select fields, the list of selected values",
     )
-

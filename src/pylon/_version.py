@@ -5,4 +5,3 @@ This module provides version information that is accessible at runtime via
 """
 
 __version__ = "0.1.0"
-

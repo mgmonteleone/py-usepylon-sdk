@@ -32,8 +32,19 @@ Example - Webhook handling:
     event = parse_webhook_event(payload)
     if isinstance(event, IssueNewEvent):
         print(f"New issue: {event.issue_title}")
+
+Example - Filter builder:
+    from pylon import filters
+
+    # Build complex filters
+    filter = filters.And(
+        filters.Field("state").in_(["open", "pending"]),
+        filters.Field("created_at").after(datetime(2024, 1, 1))
+    )
 """
 
+# Filters module - import for "from pylon import filters" usage
+from pylon import filters as filters
 from pylon._client import AsyncPylonClient, PylonClient
 from pylon._version import __version__
 
@@ -46,6 +57,9 @@ from pylon.exceptions import (
     PylonRateLimitError,
     PylonServerError,
     PylonValidationError,
+    PylonWebhookError,
+    PylonWebhookSignatureError,
+    PylonWebhookTimestampError,
 )
 
 # Models
@@ -71,7 +85,7 @@ from pylon.models import (
     PylonUser,
 )
 
-# Webhook events
+# Webhook events and handler
 from pylon.webhooks import (
     BaseIssueEvent,
     IssueAssignedEvent,
@@ -83,6 +97,7 @@ from pylon.webhooks import (
     IssueStatusChangedEvent,
     IssueTagsChangedEvent,
     PylonWebhookEvent,
+    WebhookHandler,
     parse_webhook_event,
 )
 
@@ -100,6 +115,9 @@ __all__ = [
     "PylonNotFoundError",
     "PylonValidationError",
     "PylonServerError",
+    "PylonWebhookError",
+    "PylonWebhookSignatureError",
+    "PylonWebhookTimestampError",
     # Base models
     "PylonReference",
     "PylonCustomFieldValue",
@@ -141,5 +159,8 @@ __all__ = [
     "IssueMessageNewEvent",
     "PylonWebhookEvent",
     "parse_webhook_event",
+    # Webhook handler
+    "WebhookHandler",
+    # Filters
+    "filters",
 ]
-

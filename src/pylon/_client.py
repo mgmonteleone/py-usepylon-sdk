@@ -417,4 +417,3 @@ class AsyncPylonClient:
     ) -> None:
         """Async context manager exit."""
         await self.aclose()
-

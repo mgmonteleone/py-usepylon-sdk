@@ -123,4 +123,3 @@ class PylonContact(BaseModel):
                 pass
 
         return None
-

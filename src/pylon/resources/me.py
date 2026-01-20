@@ -61,4 +61,3 @@ class AsyncMeResource(BaseAsyncResource[PylonMe]):
         response = await self._get(self._endpoint)
         data = response.get("data", response)
         return PylonMe.from_pylon_dict(data)
-

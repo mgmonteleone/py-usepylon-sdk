@@ -166,4 +166,3 @@ class TestAsyncPylonClient:
             assert len(issues) == 2
             assert issues[0].id == "async_issue_1"
             assert issues[1].id == "async_issue_2"
-

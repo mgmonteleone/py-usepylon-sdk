@@ -222,4 +222,3 @@ class AsyncAttachmentsResource(BaseAsyncResource[PylonAttachment]):
         response = await self._post(f"{self._endpoint}/from-url", data=data)
         result = response.get("data", response)
         return PylonAttachment.from_pylon_dict(result)
-

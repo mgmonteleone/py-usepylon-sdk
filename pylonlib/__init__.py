@@ -16,36 +16,42 @@ try:
     from .client import PylonClient
 except ImportError:  # pragma: no cover - exercised when optional deps are missing
     PylonClient = None  # type: ignore[assignment]
+from .knowledge_base import (
+    KnowledgeArticle,
+    get_statistics,
+    parse_faq_markdown,
+)
+from .knowledge_base import (
+    export_to_csv as export_markdown_to_csv,
+)
+from .knowledge_base import (
+    export_to_html as export_markdown_to_html,
+)
+from .knowledge_base import (
+    export_to_json as export_markdown_to_json,
+)
 from .models import (
+    PylonAccount,
+    PylonAttachment,
+    PylonContact,
     PylonIssue,
     PylonMessage,
     PylonTag,
-    PylonAttachment,
-    PylonAccount,
-    PylonContact,
-    PylonUser,
     PylonTeam,
+    PylonUser,
 )
 from .webhook_events import (
     BaseIssueEvent,
-    IssueSnapshotEvent,
-    IssueNewEvent,
     IssueAssignedEvent,
     IssueFieldChangedEvent,
+    IssueMessageNewEvent,
+    IssueNewEvent,
+    IssueReactionEvent,
+    IssueSnapshotEvent,
     IssueStatusChangedEvent,
     IssueTagsChangedEvent,
-    IssueReactionEvent,
-    IssueMessageNewEvent,
     PylonWebhookEvent,
     parse_webhook_event,
-)
-from .knowledge_base import (
-    KnowledgeArticle,
-    parse_faq_markdown,
-    export_to_json as export_markdown_to_json,
-    export_to_csv as export_markdown_to_csv,
-    export_to_html as export_markdown_to_html,
-    get_statistics,
 )
 
 # kb_scraper requires playwright which is a heavy optional dependency
@@ -54,9 +60,15 @@ try:
     from .kb_scraper import (
         PylonKBScraper,
         ScrapedArticle,
-        export_to_json as export_scraped_to_json,
+    )
+    from .kb_scraper import (
         export_to_csv as export_scraped_to_csv,
+    )
+    from .kb_scraper import (
         export_to_html as export_scraped_to_html,
+    )
+    from .kb_scraper import (
+        export_to_json as export_scraped_to_json,
     )
 except ImportError:  # pragma: no cover - exercised when playwright is not installed
     PylonKBScraper = None  # type: ignore[assignment]
@@ -67,39 +79,39 @@ except ImportError:  # pragma: no cover - exercised when playwright is not insta
 
 __all__ = [
     # API Client
-    'PylonClient',
+    "PylonClient",
     # API Models
-    'PylonIssue',
-    'PylonMessage',
-    'PylonTag',
-    'PylonAttachment',
-    'PylonAccount',
-    'PylonContact',
-    'PylonUser',
-    'PylonTeam',
+    "PylonIssue",
+    "PylonMessage",
+    "PylonTag",
+    "PylonAttachment",
+    "PylonAccount",
+    "PylonContact",
+    "PylonUser",
+    "PylonTeam",
     # Webhook Event Models
-    'BaseIssueEvent',
-    'IssueSnapshotEvent',
-    'IssueNewEvent',
-    'IssueAssignedEvent',
-    'IssueFieldChangedEvent',
-    'IssueStatusChangedEvent',
-    'IssueTagsChangedEvent',
-    'IssueReactionEvent',
-    'IssueMessageNewEvent',
-    'PylonWebhookEvent',
-    'parse_webhook_event',
+    "BaseIssueEvent",
+    "IssueSnapshotEvent",
+    "IssueNewEvent",
+    "IssueAssignedEvent",
+    "IssueFieldChangedEvent",
+    "IssueStatusChangedEvent",
+    "IssueTagsChangedEvent",
+    "IssueReactionEvent",
+    "IssueMessageNewEvent",
+    "PylonWebhookEvent",
+    "parse_webhook_event",
     # Knowledge Base (Markdown)
-    'KnowledgeArticle',
-    'parse_faq_markdown',
-    'export_markdown_to_json',
-    'export_markdown_to_csv',
-    'export_markdown_to_html',
-    'get_statistics',
+    "KnowledgeArticle",
+    "parse_faq_markdown",
+    "export_markdown_to_json",
+    "export_markdown_to_csv",
+    "export_markdown_to_html",
+    "get_statistics",
     # Knowledge Base (Web Scraper)
-    'PylonKBScraper',
-    'ScrapedArticle',
-    'export_scraped_to_json',
-    'export_scraped_to_csv',
-    'export_scraped_to_html',
+    "PylonKBScraper",
+    "ScrapedArticle",
+    "export_scraped_to_json",
+    "export_scraped_to_csv",
+    "export_scraped_to_html",
 ]

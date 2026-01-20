@@ -1,6 +1,5 @@
 """Shared pytest fixtures for Pylon SDK tests."""
 
-from datetime import datetime
 from typing import Any
 
 import pytest
@@ -63,4 +62,3 @@ def issue_list_page_2() -> dict[str, Any]:
         "data": [make_issue_data(issue_id="issue_2", number=2, title="Issue 2")],
         "pagination": {"cursor": "cursor_2", "has_more": False},
     }
-

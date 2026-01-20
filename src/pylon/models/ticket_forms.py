@@ -61,4 +61,3 @@ class PylonTicketForm(BaseModel):
             A PylonTicketForm instance.
         """
         return cls.model_validate(data)
-

@@ -180,9 +180,7 @@ class AsyncMessagesResource(BaseAsyncResource[PylonMessage]):
         Returns:
             The PylonMessage instance.
         """
-        response = await self._get(
-            f"{self._endpoint}/{issue_id}/messages/{message_id}"
-        )
+        response = await self._get(f"{self._endpoint}/{issue_id}/messages/{message_id}")
         data = response.get("data", response)
         return PylonMessage.from_pylon_dict(data)
 
@@ -210,9 +208,6 @@ class AsyncMessagesResource(BaseAsyncResource[PylonMessage]):
             "is_private": is_private,
             **kwargs,
         }
-        response = await self._post(
-            f"{self._endpoint}/{issue_id}/messages", data=data
-        )
+        response = await self._post(f"{self._endpoint}/{issue_id}/messages", data=data)
         result = response.get("data", response)
         return PylonMessage.from_pylon_dict(result)
-
