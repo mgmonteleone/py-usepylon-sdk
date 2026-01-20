@@ -90,4 +90,3 @@ class IssueAttachmentsAsyncResource(BoundAsyncResource[PylonAttachment]):
             data["content_type"] = content_type
         response = await self._post(self._base_path, data=data)
         return self._parse_single(response)
-

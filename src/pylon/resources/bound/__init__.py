@@ -39,4 +39,3 @@ __all__ = [
     "IssueAttachmentsSyncResource",
     "IssueAttachmentsAsyncResource",
 ]
-

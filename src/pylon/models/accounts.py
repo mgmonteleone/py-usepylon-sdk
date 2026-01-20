@@ -165,9 +165,7 @@ class PylonAccount(BaseModel):
                     return False
         return None
 
-    def _with_sync_transport(
-        self, transport: SyncHTTPTransport
-    ) -> PylonAccount:
+    def _with_sync_transport(self, transport: SyncHTTPTransport) -> PylonAccount:
         """Inject a sync transport for sub-resource access.
 
         Args:
@@ -179,9 +177,7 @@ class PylonAccount(BaseModel):
         self._sync_transport = transport
         return self
 
-    def _with_async_transport(
-        self, transport: AsyncHTTPTransport
-    ) -> PylonAccount:
+    def _with_async_transport(self, transport: AsyncHTTPTransport) -> PylonAccount:
         """Inject an async transport for sub-resource access.
 
         Args:

@@ -65,4 +65,3 @@ class PylonHighlight(BaseModel):
             A PylonHighlight instance.
         """
         return cls.model_validate(data)
-
