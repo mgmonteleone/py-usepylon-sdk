@@ -7,13 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-01-20
+
 ### Added
-- GitHub Actions CI/CD pipeline
-- PyPI publishing workflow with trusted publisher
-- Issue and PR templates
-- Contributing guidelines
-- Security policy
-- Code of conduct
+- GitHub Actions CI/CD pipeline (Python 3.11, 3.12, 3.13)
+- PyPI publishing workflow with trusted publisher (OIDC)
+- Sigstore artifact signing for releases
+- Issue templates (bug report, feature request)
+- Pull request template
+- Contributing guidelines (CONTRIBUTING.md)
+- Security policy (SECURITY.md)
+- Code of conduct (CODE_OF_CONDUCT.md)
 
 ## [0.3.0] - 2026-01-20
 
@@ -72,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic retry with exponential backoff
 - Comprehensive error handling
 
-[Unreleased]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mgmonteleone/py-usepylon-sdk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mgmonteleone/py-usepylon-sdk/releases/tag/v0.1.0
