@@ -5,11 +5,6 @@
 ::: pylon.webhooks.WebhookHandler
     options:
       show_root_heading: true
-      members:
-        - __init__
-        - on
-        - on_any
-        - handle
 
 ## Event Parsing
 
@@ -21,27 +16,27 @@
 
 ### Base Event
 
-::: pylon.webhooks.events.WebhookEvent
+::: pylon.webhooks.BaseIssueEvent
     options:
       show_root_heading: true
 
 ### Issue Events
 
-::: pylon.webhooks.events.IssueNewEvent
+::: pylon.webhooks.IssueNewEvent
     options:
       show_root_heading: true
 
-::: pylon.webhooks.events.IssueAssignedEvent
+::: pylon.webhooks.IssueAssignedEvent
     options:
       show_root_heading: true
 
-::: pylon.webhooks.events.IssueStateChangedEvent
+::: pylon.webhooks.IssueStatusChangedEvent
     options:
       show_root_heading: true
 
 ### Message Events
 
-::: pylon.webhooks.events.MessageNewEvent
+::: pylon.webhooks.IssueMessageNewEvent
     options:
       show_root_heading: true
 

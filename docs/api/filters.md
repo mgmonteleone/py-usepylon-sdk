@@ -37,9 +37,9 @@
     options:
       show_root_heading: true
 
-## Filter Protocol
+## Base Filter Class
 
-::: pylon.filters.FilterProtocol
+::: pylon.filters.Filter
     options:
       show_root_heading: true
 
