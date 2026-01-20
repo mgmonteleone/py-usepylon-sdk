@@ -53,6 +53,7 @@ Homepage = "https://github.com/mgmonteleone/py-usepylon-sdk"
 Documentation = "https://github.com/mgmonteleone/py-usepylon-sdk#readme"
 Repository = "https://github.com/mgmonteleone/py-usepylon-sdk.git"
 Issues = "https://github.com/mgmonteleone/py-usepylon-sdk/issues"
+Changelog = "https://github.com/mgmonteleone/py-usepylon-sdk/blob/main/CHANGELOG.md"
 
 [tool.hatch.version]
 path = "src/pylon/_version.py"
