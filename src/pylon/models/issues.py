@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from pylon.models.base import PylonCustomFieldValue, PylonReference
+
+if TYPE_CHECKING:
+    from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
+    from pylon.resources.bound.issue_attachments import (
+        IssueAttachmentsAsyncResource,
+        IssueAttachmentsSyncResource,
+    )
+    from pylon.resources.bound.issue_messages import (
+        IssueMessagesAsyncResource,
+        IssueMessagesSyncResource,
+    )
 
 
 class PylonSlackInfoForIssues(BaseModel):
@@ -64,6 +75,10 @@ class PylonIssue(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
     )
+
+    # Private attributes for sub-resource access
+    _sync_transport: SyncHTTPTransport | None = PrivateAttr(default=None)
+    _async_transport: AsyncHTTPTransport | None = PrivateAttr(default=None)
 
     id: str = Field(description="Unique identifier for the issue")
     number: int = Field(description="Human-readable issue number")
@@ -145,3 +160,75 @@ class PylonIssue(BaseModel):
             data["custom_fields"] = custom_fields
 
         return cls.model_validate(data)
+
+    def _with_sync_transport(self, transport: SyncHTTPTransport) -> PylonIssue:
+        """Inject a sync transport for sub-resource access.
+
+        Args:
+            transport: The sync HTTP transport.
+
+        Returns:
+            Self for chaining.
+        """
+        self._sync_transport = transport
+        return self
+
+    def _with_async_transport(self, transport: AsyncHTTPTransport) -> PylonIssue:
+        """Inject an async transport for sub-resource access.
+
+        Args:
+            transport: The async HTTP transport.
+
+        Returns:
+            Self for chaining.
+        """
+        self._async_transport = transport
+        return self
+
+    @property
+    def messages(self) -> IssueMessagesSyncResource | IssueMessagesAsyncResource:
+        """Access messages sub-resource.
+
+        Returns:
+            A bound resource for accessing messages.
+
+        Raises:
+            RuntimeError: If no transport has been injected.
+        """
+        from pylon.resources.bound.issue_messages import (
+            IssueMessagesAsyncResource,
+            IssueMessagesSyncResource,
+        )
+
+        if self._sync_transport:
+            return IssueMessagesSyncResource(self._sync_transport, self.id)
+        elif self._async_transport:
+            return IssueMessagesAsyncResource(self._async_transport, self.id)
+        raise RuntimeError(
+            "No transport available. Issue was not fetched through client."
+        )
+
+    @property
+    def attachments(
+        self,
+    ) -> IssueAttachmentsSyncResource | IssueAttachmentsAsyncResource:
+        """Access attachments sub-resource.
+
+        Returns:
+            A bound resource for accessing attachments.
+
+        Raises:
+            RuntimeError: If no transport has been injected.
+        """
+        from pylon.resources.bound.issue_attachments import (
+            IssueAttachmentsAsyncResource,
+            IssueAttachmentsSyncResource,
+        )
+
+        if self._sync_transport:
+            return IssueAttachmentsSyncResource(self._sync_transport, self.id)
+        elif self._async_transport:
+            return IssueAttachmentsAsyncResource(self._async_transport, self.id)
+        raise RuntimeError(
+            "No transport available. Issue was not fetched through client."
+        )

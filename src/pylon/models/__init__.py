@@ -5,11 +5,14 @@ resources. All models use Pydantic v2 for validation and serialization.
 """
 
 from pylon.models.accounts import PylonAccount
+from pylon.models.activities import PylonActivity
 from pylon.models.attachments import PylonAttachment
 from pylon.models.audit_logs import PylonAuditLog
 from pylon.models.base import PylonCustomFieldValue, PylonReference
 from pylon.models.contacts import PylonContact
 from pylon.models.custom_fields import PylonCustomField, PylonCustomFieldOption
+from pylon.models.files import PylonFile
+from pylon.models.highlights import PylonHighlight
 from pylon.models.issues import PylonIssue, PylonSlackInfoForIssues
 from pylon.models.knowledge_base import PylonKnowledgeBase, PylonKnowledgeBaseArticle
 from pylon.models.me import PylonMe
@@ -36,10 +39,16 @@ __all__ = [
     "PylonCustomFieldValue",
     # Account models
     "PylonAccount",
+    # Activity models (sub-resource)
+    "PylonActivity",
     # Audit log models
     "PylonAuditLog",
     # Contact models
     "PylonContact",
+    # File models (sub-resource)
+    "PylonFile",
+    # Highlight models (sub-resource)
+    "PylonHighlight",
     # Custom field models
     "PylonCustomField",
     "PylonCustomFieldOption",

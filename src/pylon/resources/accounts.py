@@ -44,6 +44,10 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
         """
         super().__init__(transport)
 
+    def _inject_transport(self, account: PylonAccount) -> PylonAccount:
+        """Inject transport into account for sub-resource access."""
+        return account._with_sync_transport(self._transport)
+
     def list(self, *, limit: int = 100) -> Iterator[PylonAccount]:
         """List all accounts.
 
@@ -51,7 +55,7 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             limit: Number of items per page.
 
         Yields:
-            PylonAccount instances.
+            PylonAccount instances with transport for sub-resource access.
         """
         paginator = SyncPaginator(
             transport=self._transport,
@@ -60,7 +64,8 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             params={"limit": limit},
             parser=PylonAccount.from_pylon_dict,
         )
-        yield from paginator.iter()
+        for account in paginator.iter():
+            yield self._inject_transport(account)
 
     def get(self, account_id: str) -> PylonAccount:
         """Get a specific account by ID.
@@ -69,11 +74,12 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             account_id: The account ID.
 
         Returns:
-            The PylonAccount instance.
+            The PylonAccount instance with transport for sub-resource access.
         """
         response = self._get(f"{self._endpoint}/{account_id}")
         data = response.get("data", response)
-        return PylonAccount.from_pylon_dict(data)
+        account = PylonAccount.from_pylon_dict(data)
+        return self._inject_transport(account)
 
     def search(
         self,
@@ -90,7 +96,7 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             limit: Maximum number of results.
 
         Yields:
-            Matching PylonAccount instances.
+            Matching PylonAccount instances with transport for sub-resource access.
         """
         payload = {
             "filter": {
@@ -104,7 +110,7 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
         response = self._post(f"{self._endpoint}/search", data=payload)
         items = response.get("data", [])
         for item in items:
-            yield PylonAccount.from_pylon_dict(item)
+            yield self._inject_transport(PylonAccount.from_pylon_dict(item))
 
         # Handle pagination
         while response.get("pagination", {}).get("has_next_page"):
@@ -113,7 +119,7 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             response = self._post(f"{self._endpoint}/search", data=payload)
             items = response.get("data", [])
             for item in items:
-                yield PylonAccount.from_pylon_dict(item)
+                yield self._inject_transport(PylonAccount.from_pylon_dict(item))
 
     def create(
         self,
@@ -130,14 +136,15 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             **kwargs: Additional fields.
 
         Returns:
-            The created PylonAccount instance.
+            The created PylonAccount instance with transport for sub-resource access.
         """
         data: dict[str, Any] = {"name": name, **kwargs}
         if domain:
             data["domain"] = domain
         response = self._post(self._endpoint, data=data)
         result = response.get("data", response)
-        return PylonAccount.from_pylon_dict(result)
+        account = PylonAccount.from_pylon_dict(result)
+        return self._inject_transport(account)
 
     def update(self, account_id: str, **kwargs: Any) -> PylonAccount:
         """Update an account.
@@ -147,11 +154,12 @@ class AccountsResource(BaseSyncResource[PylonAccount]):
             **kwargs: Fields to update.
 
         Returns:
-            The updated PylonAccount instance.
+            The updated PylonAccount instance with transport for sub-resource access.
         """
         response = self._patch(f"{self._endpoint}/{account_id}", data=kwargs)
         data = response.get("data", response)
-        return PylonAccount.from_pylon_dict(data)
+        account = PylonAccount.from_pylon_dict(data)
+        return self._inject_transport(account)
 
 
 class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
@@ -180,6 +188,10 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
         """
         super().__init__(transport)
 
+    def _inject_transport(self, account: PylonAccount) -> PylonAccount:
+        """Inject transport into account for sub-resource access."""
+        return account._with_async_transport(self._transport)
+
     async def list(self, *, limit: int = 100) -> AsyncIterator[PylonAccount]:
         """List all accounts asynchronously.
 
@@ -187,7 +199,7 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             limit: Number of items per page.
 
         Yields:
-            PylonAccount instances.
+            PylonAccount instances with transport for sub-resource access.
         """
         paginator = AsyncPaginator(
             transport=self._transport,
@@ -197,7 +209,7 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             parser=PylonAccount.from_pylon_dict,
         )
         async for account in paginator:
-            yield account
+            yield self._inject_transport(account)
 
     async def get(self, account_id: str) -> PylonAccount:
         """Get a specific account by ID asynchronously.
@@ -206,11 +218,12 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             account_id: The account ID.
 
         Returns:
-            The PylonAccount instance.
+            The PylonAccount instance with transport for sub-resource access.
         """
         response = await self._get(f"{self._endpoint}/{account_id}")
         data = response.get("data", response)
-        return PylonAccount.from_pylon_dict(data)
+        account = PylonAccount.from_pylon_dict(data)
+        return self._inject_transport(account)
 
     async def search(
         self,
@@ -227,7 +240,7 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             limit: Maximum number of results.
 
         Yields:
-            Matching PylonAccount instances.
+            Matching PylonAccount instances with transport for sub-resource access.
         """
         payload: dict[str, Any] = {
             "filter": {
@@ -241,7 +254,7 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
         response = await self._post(f"{self._endpoint}/search", data=payload)
         items = response.get("data", [])
         for item in items:
-            yield PylonAccount.from_pylon_dict(item)
+            yield self._inject_transport(PylonAccount.from_pylon_dict(item))
 
         # Handle pagination
         while response.get("pagination", {}).get("has_next_page"):
@@ -250,7 +263,7 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             response = await self._post(f"{self._endpoint}/search", data=payload)
             items = response.get("data", [])
             for item in items:
-                yield PylonAccount.from_pylon_dict(item)
+                yield self._inject_transport(PylonAccount.from_pylon_dict(item))
 
     async def create(
         self,
@@ -267,14 +280,15 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             **kwargs: Additional fields.
 
         Returns:
-            The created PylonAccount instance.
+            The created PylonAccount instance with transport for sub-resource access.
         """
         data: dict[str, Any] = {"name": name, **kwargs}
         if domain:
             data["domain"] = domain
         response = await self._post(self._endpoint, data=data)
         result = response.get("data", response)
-        return PylonAccount.from_pylon_dict(result)
+        account = PylonAccount.from_pylon_dict(result)
+        return self._inject_transport(account)
 
     async def update(self, account_id: str, **kwargs: Any) -> PylonAccount:
         """Update an account asynchronously.
@@ -284,8 +298,9 @@ class AsyncAccountsResource(BaseAsyncResource[PylonAccount]):
             **kwargs: Fields to update.
 
         Returns:
-            The updated PylonAccount instance.
+            The updated PylonAccount instance with transport for sub-resource access.
         """
         response = await self._patch(f"{self._endpoint}/{account_id}", data=kwargs)
         data = response.get("data", response)
-        return PylonAccount.from_pylon_dict(data)
+        account = PylonAccount.from_pylon_dict(data)
+        return self._inject_transport(account)

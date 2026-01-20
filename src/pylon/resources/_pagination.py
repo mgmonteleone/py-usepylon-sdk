@@ -99,6 +99,17 @@ class SyncPaginator(Generic[T]):
 
             cursor = pagination.cursor
 
+    def collect(self) -> list[T]:
+        """Collect all paginated results into a list.
+
+        Returns:
+            A list containing all items from all pages.
+
+        Example:
+            all_issues = client.issues.list().collect()
+        """
+        return list(self.iter())
+
 
 class AsyncPaginator(Generic[T]):
     """Asynchronous paginator for API results.
@@ -181,3 +192,14 @@ class AsyncPaginator(Generic[T]):
                 break
 
             cursor = pagination.cursor
+
+    async def collect(self) -> list[T]:
+        """Collect all paginated results into a list.
+
+        Returns:
+            A list containing all items from all pages.
+
+        Example:
+            all_issues = await client.issues.list().collect()
+        """
+        return [item async for item in self.aiter()]

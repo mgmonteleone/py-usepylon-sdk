@@ -7,6 +7,7 @@ Pylon Audit Logs API endpoint.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Iterator
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from pylon.models.audit_logs import PylonAuditLog
@@ -15,6 +16,23 @@ from pylon.resources._pagination import AsyncPaginator, SyncPaginator
 
 if TYPE_CHECKING:
     from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
+
+
+def _format_datetime_utc(dt: datetime) -> str:
+    """Format datetime as UTC ISO 8601 string.
+
+    Converts timezone-aware datetimes to UTC before formatting.
+    Naive datetimes are assumed to already be in UTC.
+
+    Args:
+        dt: The datetime to format.
+
+    Returns:
+        ISO 8601 formatted string with Z suffix (UTC).
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
@@ -55,6 +73,8 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
         action: str | None = None,
         resource_type: str | None = None,
         actor_id: str | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
         limit: int = 100,
         **kwargs: Any,
     ) -> Iterator[PylonAuditLog]:
@@ -64,6 +84,8 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
             action: Filter by action type.
             resource_type: Filter by resource type.
             actor_id: Filter by actor user ID.
+            created_after: Filter logs created after this datetime.
+            created_before: Filter logs created before this datetime.
             limit: Maximum number of results.
             **kwargs: Additional filter parameters.
 
@@ -77,6 +99,10 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
             params["resource_type"] = resource_type
         if actor_id:
             params["actor_id"] = actor_id
+        if created_after:
+            params["created_after"] = _format_datetime_utc(created_after)
+        if created_before:
+            params["created_before"] = _format_datetime_utc(created_before)
 
         response = self._get(f"{self._endpoint}/search", params=params)
         items = response.get("data", [])
@@ -132,6 +158,8 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
         action: str | None = None,
         resource_type: str | None = None,
         actor_id: str | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
         limit: int = 100,
         **kwargs: Any,
     ) -> AsyncIterator[PylonAuditLog]:
@@ -141,6 +169,8 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
             action: Filter by action type.
             resource_type: Filter by resource type.
             actor_id: Filter by actor user ID.
+            created_after: Filter logs created after this datetime.
+            created_before: Filter logs created before this datetime.
             limit: Maximum number of results.
             **kwargs: Additional filter parameters.
 
@@ -154,6 +184,10 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
             params["resource_type"] = resource_type
         if actor_id:
             params["actor_id"] = actor_id
+        if created_after:
+            params["created_after"] = _format_datetime_utc(created_after)
+        if created_before:
+            params["created_before"] = _format_datetime_utc(created_before)
 
         response = await self._get(f"{self._endpoint}/search", params=params)
         items = response.get("data", [])

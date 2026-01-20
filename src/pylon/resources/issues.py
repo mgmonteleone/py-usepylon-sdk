@@ -19,6 +19,23 @@ if TYPE_CHECKING:
     from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
 
 
+def _format_datetime_utc(dt: datetime) -> str:
+    """Format datetime as UTC ISO 8601 string.
+
+    Converts timezone-aware datetimes to UTC before formatting.
+    Naive datetimes are assumed to already be in UTC.
+
+    Args:
+        dt: The datetime to format.
+
+    Returns:
+        ISO 8601 formatted string with Z suffix (UTC).
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 class IssuesResource(BaseSyncResource[PylonIssue]):
     """Synchronous resource for managing Pylon issues.
 
@@ -46,6 +63,10 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             transport: The HTTP transport to use for requests.
         """
         super().__init__(transport)
+
+    def _inject_transport(self, issue: PylonIssue) -> PylonIssue:
+        """Inject transport into issue for sub-resource access."""
+        return issue._with_sync_transport(self._transport)
 
     def list(
         self,
@@ -88,7 +109,8 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             params=params,
             parser=PylonIssue.from_pylon_dict,
         )
-        yield from paginator.iter()
+        for issue in paginator.iter():
+            yield self._inject_transport(issue)
 
     def get(self, issue_id: str) -> PylonIssue:
         """Get a specific issue by ID.
@@ -97,11 +119,12 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             issue_id: The issue ID or ticket number.
 
         Returns:
-            The PylonIssue instance.
+            The PylonIssue instance with transport for sub-resource access.
         """
         response = self._get(f"{self._endpoint}/{issue_id}")
         data = response.get("data", response)
-        return PylonIssue.from_pylon_dict(data)
+        issue = PylonIssue.from_pylon_dict(data)
+        return self._inject_transport(issue)
 
     def get_by_number(self, number: int) -> PylonIssue | None:
         """Get an issue by its ticket number.
@@ -127,11 +150,12 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             **kwargs: Fields to update.
 
         Returns:
-            The updated PylonIssue instance.
+            The updated PylonIssue instance with transport for sub-resource access.
         """
         response = self._patch(f"{self._endpoint}/{issue_id}", data=kwargs)
         data = response.get("data", response)
-        return PylonIssue.from_pylon_dict(data)
+        issue = PylonIssue.from_pylon_dict(data)
+        return self._inject_transport(issue)
 
     def create(
         self,
@@ -154,7 +178,7 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             **kwargs: Additional fields.
 
         Returns:
-            The created PylonIssue instance.
+            The created PylonIssue instance with transport for sub-resource access.
         """
         data = {
             "title": title,
@@ -167,33 +191,78 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             data["assignee"] = assignee
         response = self._post(self._endpoint, data=data)
         result = response.get("data", response)
-        return PylonIssue.from_pylon_dict(result)
+        issue = PylonIssue.from_pylon_dict(result)
+        return self._inject_transport(issue)
 
     def search(
         self,
-        query: str,
+        query: str = "",
         *,
+        state: str | None = None,
+        priority: str | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
+        assigned_to: str | None = None,
+        tags: builtins.list[str] | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 100,
     ) -> Iterator[PylonIssue]:
-        """Search for issues.
+        """Search for issues with typed filter parameters.
 
         Args:
             query: Search query string.
-            filters: Additional filters as key-value pairs.
+            state: Filter by issue state (e.g., "open", "resolved", "closed").
+            priority: Filter by priority (e.g., "low", "medium", "high", "urgent").
+            created_after: Filter issues created after this datetime.
+            created_before: Filter issues created before this datetime.
+            assigned_to: Filter by assignee user ID or email.
+            tags: Filter by list of tag IDs.
+            filters: Additional filters as key-value pairs (legacy).
             limit: Maximum number of results.
 
         Yields:
-            Matching PylonIssue instances.
+            Matching PylonIssue instances with transport for sub-resource access.
         """
-        payload: dict[str, Any] = {"query": query, "limit": limit}
-        if filters:
+        payload: dict[str, Any] = {"limit": limit}
+        if query:
+            payload["query"] = query
+
+        # Build filters from typed parameters
+        filter_list: builtins.list[dict[str, Any]] = []
+        if state:
+            filter_list.append({"field": "state", "operator": "equals", "value": state})
+        if priority:
+            filter_list.append(
+                {"field": "priority", "operator": "equals", "value": priority}
+            )
+        if created_after:
+            filter_list.append({
+                "field": "created_at",
+                "operator": "gte",
+                "value": _format_datetime_utc(created_after),
+            })
+        if created_before:
+            filter_list.append({
+                "field": "created_at",
+                "operator": "lte",
+                "value": _format_datetime_utc(created_before),
+            })
+        if assigned_to:
+            filter_list.append(
+                {"field": "assignee", "operator": "equals", "value": assigned_to}
+            )
+        if tags:
+            filter_list.append({"field": "tags", "operator": "in", "value": tags})
+
+        if filter_list:
+            payload["filters"] = filter_list
+        elif filters:
             payload["filters"] = filters
 
         response = self._post(f"{self._endpoint}/search", data=payload)
         items = response.get("data", [])
         for item in items:
-            yield PylonIssue.from_pylon_dict(item)
+            yield self._inject_transport(PylonIssue.from_pylon_dict(item))
 
         # Handle pagination
         while response.get("pagination", {}).get("has_next_page"):
@@ -202,7 +271,7 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             response = self._post(f"{self._endpoint}/search", data=payload)
             items = response.get("data", [])
             for item in items:
-                yield PylonIssue.from_pylon_dict(item)
+                yield self._inject_transport(PylonIssue.from_pylon_dict(item))
 
     def snooze(self, issue_id: str, *, until: datetime | str) -> PylonIssue:
         """Snooze an issue until a specific date/time.
@@ -212,7 +281,7 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             until: Date/time when issue should reappear (ISO 8601 or datetime).
 
         Returns:
-            The updated PylonIssue instance.
+            The updated PylonIssue instance with transport for sub-resource access.
         """
         if isinstance(until, datetime):
             # Normalize to UTC before formatting (naive datetimes assumed to be UTC)
@@ -224,7 +293,87 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             f"{self._endpoint}/{issue_id}/snooze", data={"until": until_str}
         )
         data = response.get("data", response)
-        return PylonIssue.from_pylon_dict(data)
+        issue = PylonIssue.from_pylon_dict(data)
+        return self._inject_transport(issue)
+
+    def bulk_update(
+        self,
+        issue_ids: builtins.list[str],
+        **updates: Any,
+    ) -> builtins.list[PylonIssue]:
+        """Update multiple issues at once.
+
+        Args:
+            issue_ids: List of issue IDs to update.
+            **updates: Fields to update on all issues.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        payload = {"issue_ids": issue_ids, "updates": updates}
+        response = self._post(f"{self._endpoint}/bulk/update", data=payload)
+        items = response.get("data", [])
+        return [
+            self._inject_transport(PylonIssue.from_pylon_dict(item)) for item in items
+        ]
+
+    def bulk_assign(
+        self,
+        issue_ids: builtins.list[str],
+        assignee: str,
+    ) -> builtins.list[PylonIssue]:
+        """Assign multiple issues to a user.
+
+        Args:
+            issue_ids: List of issue IDs to assign.
+            assignee: User ID or email to assign issues to.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        return self.bulk_update(issue_ids, assignee=assignee)
+
+    def bulk_add_tags(
+        self,
+        issue_ids: builtins.list[str],
+        tags: builtins.list[str],
+    ) -> builtins.list[PylonIssue]:
+        """Add tags to multiple issues.
+
+        Args:
+            issue_ids: List of issue IDs.
+            tags: List of tag IDs to add.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        payload = {"issue_ids": issue_ids, "tags": tags}
+        response = self._post(f"{self._endpoint}/bulk/add_tags", data=payload)
+        items = response.get("data", [])
+        return [
+            self._inject_transport(PylonIssue.from_pylon_dict(item)) for item in items
+        ]
+
+    def bulk_remove_tags(
+        self,
+        issue_ids: builtins.list[str],
+        tags: builtins.list[str],
+    ) -> builtins.list[PylonIssue]:
+        """Remove tags from multiple issues.
+
+        Args:
+            issue_ids: List of issue IDs.
+            tags: List of tag IDs to remove.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        payload = {"issue_ids": issue_ids, "tags": tags}
+        response = self._post(f"{self._endpoint}/bulk/remove_tags", data=payload)
+        items = response.get("data", [])
+        return [
+            self._inject_transport(PylonIssue.from_pylon_dict(item)) for item in items
+        ]
 
     def messages(
         self, issue_id: str, limit: int | None = None
@@ -274,6 +423,10 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
         """
         super().__init__(transport)
 
+    def _inject_transport(self, issue: PylonIssue) -> PylonIssue:
+        """Inject transport into issue for sub-resource access."""
+        return issue._with_async_transport(self._transport)
+
     async def list(
         self,
         *,
@@ -291,7 +444,7 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             limit: Number of items per page.
 
         Yields:
-            PylonIssue instances.
+            PylonIssue instances with transport for sub-resource access.
         """
         # Calculate time range
         if end_time is None:
@@ -316,7 +469,7 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             parser=PylonIssue.from_pylon_dict,
         )
         async for issue in paginator:
-            yield issue
+            yield self._inject_transport(issue)
 
     async def get(self, issue_id: str) -> PylonIssue:
         """Get a specific issue by ID asynchronously.
@@ -325,11 +478,12 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             issue_id: The issue ID or ticket number.
 
         Returns:
-            The PylonIssue instance.
+            The PylonIssue instance with transport for sub-resource access.
         """
         response = await self._get(f"{self._endpoint}/{issue_id}")
         data = response.get("data", response)
-        return PylonIssue.from_pylon_dict(data)
+        issue = PylonIssue.from_pylon_dict(data)
+        return self._inject_transport(issue)
 
     async def get_by_number(self, number: int) -> PylonIssue | None:
         """Get an issue by its ticket number asynchronously.
@@ -355,11 +509,12 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             **kwargs: Fields to update.
 
         Returns:
-            The updated PylonIssue instance.
+            The updated PylonIssue instance with transport for sub-resource access.
         """
         response = await self._patch(f"{self._endpoint}/{issue_id}", data=kwargs)
         data = response.get("data", response)
-        return PylonIssue.from_pylon_dict(data)
+        issue = PylonIssue.from_pylon_dict(data)
+        return self._inject_transport(issue)
 
     async def create(
         self,
@@ -382,7 +537,7 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             **kwargs: Additional fields.
 
         Returns:
-            The created PylonIssue instance.
+            The created PylonIssue instance with transport for sub-resource access.
         """
         data = {
             "title": title,
@@ -395,33 +550,78 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             data["assignee"] = assignee
         response = await self._post(self._endpoint, data=data)
         result = response.get("data", response)
-        return PylonIssue.from_pylon_dict(result)
+        issue = PylonIssue.from_pylon_dict(result)
+        return self._inject_transport(issue)
 
     async def search(
         self,
-        query: str,
+        query: str = "",
         *,
+        state: str | None = None,
+        priority: str | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
+        assigned_to: str | None = None,
+        tags: builtins.list[str] | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 100,
     ) -> AsyncIterator[PylonIssue]:
-        """Search for issues asynchronously.
+        """Search for issues asynchronously with typed filter parameters.
 
         Args:
             query: Search query string.
-            filters: Additional filters as key-value pairs.
+            state: Filter by issue state (e.g., "open", "resolved", "closed").
+            priority: Filter by priority (e.g., "low", "medium", "high", "urgent").
+            created_after: Filter issues created after this datetime.
+            created_before: Filter issues created before this datetime.
+            assigned_to: Filter by assignee user ID or email.
+            tags: Filter by list of tag IDs.
+            filters: Additional filters as key-value pairs (legacy).
             limit: Maximum number of results.
 
         Yields:
-            Matching PylonIssue instances.
+            Matching PylonIssue instances with transport for sub-resource access.
         """
-        payload: dict[str, Any] = {"query": query, "limit": limit}
-        if filters:
+        payload: dict[str, Any] = {"limit": limit}
+        if query:
+            payload["query"] = query
+
+        # Build filters from typed parameters
+        filter_list: builtins.list[dict[str, Any]] = []
+        if state:
+            filter_list.append({"field": "state", "operator": "equals", "value": state})
+        if priority:
+            filter_list.append(
+                {"field": "priority", "operator": "equals", "value": priority}
+            )
+        if created_after:
+            filter_list.append({
+                "field": "created_at",
+                "operator": "gte",
+                "value": _format_datetime_utc(created_after),
+            })
+        if created_before:
+            filter_list.append({
+                "field": "created_at",
+                "operator": "lte",
+                "value": _format_datetime_utc(created_before),
+            })
+        if assigned_to:
+            filter_list.append(
+                {"field": "assignee", "operator": "equals", "value": assigned_to}
+            )
+        if tags:
+            filter_list.append({"field": "tags", "operator": "in", "value": tags})
+
+        if filter_list:
+            payload["filters"] = filter_list
+        elif filters:
             payload["filters"] = filters
 
         response = await self._post(f"{self._endpoint}/search", data=payload)
         items = response.get("data", [])
         for item in items:
-            yield PylonIssue.from_pylon_dict(item)
+            yield self._inject_transport(PylonIssue.from_pylon_dict(item))
 
         # Handle pagination
         while response.get("pagination", {}).get("has_next_page"):
@@ -430,7 +630,7 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             response = await self._post(f"{self._endpoint}/search", data=payload)
             items = response.get("data", [])
             for item in items:
-                yield PylonIssue.from_pylon_dict(item)
+                yield self._inject_transport(PylonIssue.from_pylon_dict(item))
 
     async def snooze(self, issue_id: str, *, until: datetime | str) -> PylonIssue:
         """Snooze an issue until a specific date/time asynchronously.
@@ -440,7 +640,7 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             until: Date/time when issue should reappear (ISO 8601 or datetime).
 
         Returns:
-            The updated PylonIssue instance.
+            The updated PylonIssue instance with transport for sub-resource access.
         """
         if isinstance(until, datetime):
             # Normalize to UTC before formatting (naive datetimes assumed to be UTC)
@@ -452,7 +652,87 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             f"{self._endpoint}/{issue_id}/snooze", data={"until": until_str}
         )
         data = response.get("data", response)
-        return PylonIssue.from_pylon_dict(data)
+        issue = PylonIssue.from_pylon_dict(data)
+        return self._inject_transport(issue)
+
+    async def bulk_update(
+        self,
+        issue_ids: builtins.list[str],
+        **updates: Any,
+    ) -> builtins.list[PylonIssue]:
+        """Update multiple issues at once asynchronously.
+
+        Args:
+            issue_ids: List of issue IDs to update.
+            **updates: Fields to update on all issues.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        payload = {"issue_ids": issue_ids, "updates": updates}
+        response = await self._post(f"{self._endpoint}/bulk/update", data=payload)
+        items = response.get("data", [])
+        return [
+            self._inject_transport(PylonIssue.from_pylon_dict(item)) for item in items
+        ]
+
+    async def bulk_assign(
+        self,
+        issue_ids: builtins.list[str],
+        assignee: str,
+    ) -> builtins.list[PylonIssue]:
+        """Assign multiple issues to a user asynchronously.
+
+        Args:
+            issue_ids: List of issue IDs to assign.
+            assignee: User ID or email to assign issues to.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        return await self.bulk_update(issue_ids, assignee=assignee)
+
+    async def bulk_add_tags(
+        self,
+        issue_ids: builtins.list[str],
+        tags: builtins.list[str],
+    ) -> builtins.list[PylonIssue]:
+        """Add tags to multiple issues asynchronously.
+
+        Args:
+            issue_ids: List of issue IDs.
+            tags: List of tag IDs to add.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        payload = {"issue_ids": issue_ids, "tags": tags}
+        response = await self._post(f"{self._endpoint}/bulk/add_tags", data=payload)
+        items = response.get("data", [])
+        return [
+            self._inject_transport(PylonIssue.from_pylon_dict(item)) for item in items
+        ]
+
+    async def bulk_remove_tags(
+        self,
+        issue_ids: builtins.list[str],
+        tags: builtins.list[str],
+    ) -> builtins.list[PylonIssue]:
+        """Remove tags from multiple issues asynchronously.
+
+        Args:
+            issue_ids: List of issue IDs.
+            tags: List of tag IDs to remove.
+
+        Returns:
+            List of updated PylonIssue instances.
+        """
+        payload = {"issue_ids": issue_ids, "tags": tags}
+        response = await self._post(f"{self._endpoint}/bulk/remove_tags", data=payload)
+        items = response.get("data", [])
+        return [
+            self._inject_transport(PylonIssue.from_pylon_dict(item)) for item in items
+        ]
 
     async def messages(
         self, issue_id: str, limit: int | None = None

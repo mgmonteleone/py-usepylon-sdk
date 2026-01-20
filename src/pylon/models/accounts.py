@@ -3,11 +3,26 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from pylon.models.base import PylonCustomFieldValue, PylonReference
+
+if TYPE_CHECKING:
+    from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
+    from pylon.resources.bound.account_activities import (
+        AccountActivitiesAsyncResource,
+        AccountActivitiesSyncResource,
+    )
+    from pylon.resources.bound.account_files import (
+        AccountFilesAsyncResource,
+        AccountFilesSyncResource,
+    )
+    from pylon.resources.bound.account_highlights import (
+        AccountHighlightsAsyncResource,
+        AccountHighlightsSyncResource,
+    )
 
 
 class PylonAccount(BaseModel):
@@ -34,6 +49,10 @@ class PylonAccount(BaseModel):
     model_config = ConfigDict(
         extra="ignore",
     )
+
+    # Private attributes for sub-resource access
+    _sync_transport: SyncHTTPTransport | None = PrivateAttr(default=None)
+    _async_transport: AsyncHTTPTransport | None = PrivateAttr(default=None)
 
     id: str = Field(description="Unique identifier for the account")
     name: str = Field(description="Account name")
@@ -145,3 +164,104 @@ class PylonAccount(BaseModel):
                 elif value_str in ("false", "0", "no"):
                     return False
         return None
+
+    def _with_sync_transport(
+        self, transport: SyncHTTPTransport
+    ) -> PylonAccount:
+        """Inject a sync transport for sub-resource access.
+
+        Args:
+            transport: The sync HTTP transport.
+
+        Returns:
+            Self for chaining.
+        """
+        self._sync_transport = transport
+        return self
+
+    def _with_async_transport(
+        self, transport: AsyncHTTPTransport
+    ) -> PylonAccount:
+        """Inject an async transport for sub-resource access.
+
+        Args:
+            transport: The async HTTP transport.
+
+        Returns:
+            Self for chaining.
+        """
+        self._async_transport = transport
+        return self
+
+    @property
+    def activities(
+        self,
+    ) -> AccountActivitiesSyncResource | AccountActivitiesAsyncResource:
+        """Access activities sub-resource.
+
+        Returns:
+            A bound resource for accessing activities.
+
+        Raises:
+            RuntimeError: If no transport has been injected.
+        """
+        from pylon.resources.bound.account_activities import (
+            AccountActivitiesAsyncResource,
+            AccountActivitiesSyncResource,
+        )
+
+        if self._sync_transport:
+            return AccountActivitiesSyncResource(self._sync_transport, self.id)
+        elif self._async_transport:
+            return AccountActivitiesAsyncResource(self._async_transport, self.id)
+        raise RuntimeError(
+            "No transport available. Account was not fetched through client."
+        )
+
+    @property
+    def files(self) -> AccountFilesSyncResource | AccountFilesAsyncResource:
+        """Access files sub-resource.
+
+        Returns:
+            A bound resource for accessing files.
+
+        Raises:
+            RuntimeError: If no transport has been injected.
+        """
+        from pylon.resources.bound.account_files import (
+            AccountFilesAsyncResource,
+            AccountFilesSyncResource,
+        )
+
+        if self._sync_transport:
+            return AccountFilesSyncResource(self._sync_transport, self.id)
+        elif self._async_transport:
+            return AccountFilesAsyncResource(self._async_transport, self.id)
+        raise RuntimeError(
+            "No transport available. Account was not fetched through client."
+        )
+
+    @property
+    def highlights(
+        self,
+    ) -> AccountHighlightsSyncResource | AccountHighlightsAsyncResource:
+        """Access highlights sub-resource.
+
+        Returns:
+            A bound resource for accessing highlights.
+
+        Raises:
+            RuntimeError: If no transport has been injected.
+        """
+        from pylon.resources.bound.account_highlights import (
+            AccountHighlightsAsyncResource,
+            AccountHighlightsSyncResource,
+        )
+
+        if self._sync_transport:
+            return AccountHighlightsSyncResource(self._sync_transport, self.id)
+        elif self._async_transport:
+            return AccountHighlightsAsyncResource(self._async_transport, self.id)
+        raise RuntimeError(
+            "No transport available. Account was not fetched through client."
+        )
