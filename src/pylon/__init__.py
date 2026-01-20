@@ -6,18 +6,25 @@ This SDK provides:
 - Type-safe models for all Pylon API entities
 - Comprehensive exception handling
 - Webhook event parsing and validation
-- Support for both sync and async operations (coming in future phases)
+- Full sync and async client support
 
-Note:
-    Phase 1 includes models, exceptions, and webhook support.
-    The PylonClient for making API calls will be available in a future release.
+Example - Sync client usage:
+    from pylon import PylonClient
 
-Example - Working with models:
-    from pylon.models import PylonIssue
+    with PylonClient(api_key="...") as client:
+        # List recent issues
+        for issue in client.issues.list(days=7):
+            print(f"#{issue.number}: {issue.title}")
 
-    issue_data = {"id": "issue_123", "number": 42, "title": "Test", ...}
-    issue = PylonIssue.from_pylon_dict(issue_data)
-    print(f"#{issue.number}: {issue.title}")
+        # Get a specific issue
+        issue = client.issues.get("issue_123")
+
+Example - Async client usage:
+    from pylon import AsyncPylonClient
+
+    async with AsyncPylonClient(api_key="...") as client:
+        async for issue in client.issues.list(days=7):
+            print(f"#{issue.number}: {issue.title}")
 
 Example - Webhook handling:
     from pylon.webhooks import parse_webhook_event, IssueNewEvent
@@ -27,6 +34,7 @@ Example - Webhook handling:
         print(f"New issue: {event.issue_title}")
 """
 
+from pylon._client import AsyncPylonClient, PylonClient
 from pylon._version import __version__
 
 # Exceptions
@@ -81,6 +89,9 @@ from pylon.webhooks import (
 __all__ = [
     # Version
     "__version__",
+    # Clients
+    "PylonClient",
+    "AsyncPylonClient",
     # Exceptions
     "PylonError",
     "PylonAPIError",
