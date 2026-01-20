@@ -34,7 +34,6 @@ ENV/
 .vscode/
 *.swp
 *.swo
-.augment/
 
 # Testing
 .coverage

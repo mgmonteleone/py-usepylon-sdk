@@ -6,9 +6,13 @@ resources. All models use Pydantic v2 for validation and serialization.
 
 from pylon.models.accounts import PylonAccount
 from pylon.models.attachments import PylonAttachment
+from pylon.models.audit_logs import PylonAuditLog
 from pylon.models.base import PylonCustomFieldValue, PylonReference
 from pylon.models.contacts import PylonContact
+from pylon.models.custom_fields import PylonCustomField, PylonCustomFieldOption
 from pylon.models.issues import PylonIssue, PylonSlackInfoForIssues
+from pylon.models.knowledge_base import PylonKnowledgeBase, PylonKnowledgeBaseArticle
+from pylon.models.me import PylonMe
 from pylon.models.messages import (
     PylonEmailInfo,
     PylonMessage,
@@ -18,8 +22,12 @@ from pylon.models.messages import (
     PylonSlackInfoForMessages,
 )
 from pylon.models.pagination import PylonPagination, PylonResponse
+from pylon.models.projects import PylonProject
 from pylon.models.tags import PylonTag
+from pylon.models.tasks import PylonTask
 from pylon.models.teams import PylonTeam, PylonTeamMember
+from pylon.models.ticket_forms import PylonTicketForm, PylonTicketFormField
+from pylon.models.user_roles import PylonUserRole
 from pylon.models.users import PylonUser
 
 __all__ = [
@@ -28,11 +36,18 @@ __all__ = [
     "PylonCustomFieldValue",
     # Account models
     "PylonAccount",
+    # Audit log models
+    "PylonAuditLog",
     # Contact models
     "PylonContact",
+    # Custom field models
+    "PylonCustomField",
+    "PylonCustomFieldOption",
     # Issue models
     "PylonIssue",
     "PylonSlackInfoForIssues",
+    # Me (current user) models
+    "PylonMe",
     # Message models
     "PylonMessage",
     "PylonMessageAuthor",
@@ -42,8 +57,20 @@ __all__ = [
     "PylonSlackInfoForMessages",
     # Attachment models
     "PylonAttachment",
+    # Knowledge base models
+    "PylonKnowledgeBase",
+    "PylonKnowledgeBaseArticle",
+    # Project models
+    "PylonProject",
+    # Task models
+    "PylonTask",
+    # Ticket form models
+    "PylonTicketForm",
+    "PylonTicketFormField",
     # User models
     "PylonUser",
+    # User role models
+    "PylonUserRole",
     # Team models
     "PylonTeam",
     "PylonTeamMember",

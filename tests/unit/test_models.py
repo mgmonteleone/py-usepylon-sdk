@@ -3,14 +3,23 @@
 import pytest
 
 from pylon.models import (
+    PylonAuditLog,
+    PylonCustomField,
+    PylonCustomFieldOption,
     PylonCustomFieldValue,
+    PylonMe,
     PylonPagination,
+    PylonProject,
     PylonReference,
     PylonResponse,
     PylonTag,
+    PylonTask,
     PylonTeam,
     PylonTeamMember,
+    PylonTicketForm,
+    PylonTicketFormField,
     PylonUser,
+    PylonUserRole,
 )
 
 
@@ -142,4 +151,143 @@ class TestPylonResponse:
         assert response.pagination is not None
         assert response.pagination.cursor == "abc"
         assert response.request_id == "req_123"
+
+
+class TestPylonCustomField:
+    """Tests for PylonCustomField."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "cf_123",
+            "name": "Priority Level",
+            "slug": "priority_level",
+            "field_type": "select",
+            "description": "Issue priority",
+            "options": [
+                {"id": "opt_1", "value": "High"},
+                {"id": "opt_2", "value": "Low"},
+            ],
+        }
+        field = PylonCustomField.from_pylon_dict(data)
+        assert field.id == "cf_123"
+        assert field.name == "Priority Level"
+        assert field.slug == "priority_level"
+        assert field.field_type == "select"
+        assert len(field.options) == 2
+        assert isinstance(field.options[0], PylonCustomFieldOption)
+
+
+class TestPylonTask:
+    """Tests for PylonTask."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "task_123",
+            "title": "Follow up with customer",
+            "description": "Check on resolution",
+            "status": "pending",
+            "due_at": "2024-01-15T10:00:00Z",
+            "issue": {"id": "issue_456"},
+            "assignee": {"id": "user_789"},
+        }
+        task = PylonTask.from_pylon_dict(data)
+        assert task.id == "task_123"
+        assert task.title == "Follow up with customer"
+        assert task.status == "pending"
+        assert task.issue is not None
+        assert task.issue.id == "issue_456"
+
+
+class TestPylonProject:
+    """Tests for PylonProject."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "proj_123",
+            "name": "Q1 Onboarding",
+            "description": "Customer onboarding project",
+            "status": "active",
+            "account": {"id": "acc_456"},
+        }
+        project = PylonProject.from_pylon_dict(data)
+        assert project.id == "proj_123"
+        assert project.name == "Q1 Onboarding"
+        assert project.status == "active"
+
+
+class TestPylonTicketForm:
+    """Tests for PylonTicketForm."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "form_123",
+            "name": "Bug Report",
+            "description": "Form for bug reports",
+            "fields": [
+                {"id": "field_1", "name": "Summary", "field_type": "text"},
+                {"id": "field_2", "name": "Steps", "field_type": "textarea"},
+            ],
+        }
+        form = PylonTicketForm.from_pylon_dict(data)
+        assert form.id == "form_123"
+        assert form.name == "Bug Report"
+        assert len(form.fields) == 2
+        assert isinstance(form.fields[0], PylonTicketFormField)
+
+
+class TestPylonUserRole:
+    """Tests for PylonUserRole."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "role_123",
+            "name": "Support Agent",
+            "description": "Standard support role",
+            "permissions": ["view_issues", "edit_issues"],
+        }
+        role = PylonUserRole.from_pylon_dict(data)
+        assert role.id == "role_123"
+        assert role.name == "Support Agent"
+
+
+class TestPylonAuditLog:
+    """Tests for PylonAuditLog."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "log_123",
+            "action": "issue.created",
+            "actor": {"id": "user_456"},
+            "resource_type": "issue",
+            "resource_id": "issue_789",
+            "timestamp": "2024-01-10T15:30:00Z",
+        }
+        log = PylonAuditLog.from_pylon_dict(data)
+        assert log.id == "log_123"
+        assert log.action == "issue.created"
+        assert log.resource_type == "issue"
+
+
+class TestPylonMe:
+    """Tests for PylonMe."""
+
+    def test_from_pylon_dict(self):
+        """Should create from API response."""
+        data = {
+            "id": "user_123",
+            "name": "Current User",
+            "email": "me@example.com",
+            "status": "active",
+            "role_id": "role_admin",
+        }
+        me = PylonMe.from_pylon_dict(data)
+        assert me.id == "user_123"
+        assert me.name == "Current User"
+        assert me.email == "me@example.com"
 

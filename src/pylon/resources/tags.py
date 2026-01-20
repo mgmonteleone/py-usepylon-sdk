@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pylon.models import PylonTag
 from pylon.resources._base import BaseAsyncResource, BaseSyncResource
@@ -33,6 +33,43 @@ class TagsResource(BaseSyncResource[PylonTag]):
         )
         yield from paginator.iter()
 
+    def get(self, tag_id: str) -> PylonTag:
+        """Get a specific tag by ID.
+
+        Args:
+            tag_id: The tag ID.
+
+        Returns:
+            The PylonTag instance.
+        """
+        response = self._get(f"{self._endpoint}/{tag_id}")
+        data = response.get("data", response)
+        return PylonTag.from_pylon_dict(data)
+
+    def create(
+        self,
+        *,
+        name: str,
+        color: str | None = None,
+        **kwargs: Any,
+    ) -> PylonTag:
+        """Create a new tag.
+
+        Args:
+            name: Tag name/value.
+            color: Hex color for the tag.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonTag instance.
+        """
+        data: dict[str, Any] = {"name": name, **kwargs}
+        if color:
+            data["hex_color"] = color
+        response = self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonTag.from_pylon_dict(result)
+
 
 class AsyncTagsResource(BaseAsyncResource[PylonTag]):
     """Asynchronous resource for managing Pylon tags."""
@@ -54,4 +91,41 @@ class AsyncTagsResource(BaseAsyncResource[PylonTag]):
         )
         async for tag in paginator:
             yield tag
+
+    async def get(self, tag_id: str) -> PylonTag:
+        """Get a specific tag by ID asynchronously.
+
+        Args:
+            tag_id: The tag ID.
+
+        Returns:
+            The PylonTag instance.
+        """
+        response = await self._get(f"{self._endpoint}/{tag_id}")
+        data = response.get("data", response)
+        return PylonTag.from_pylon_dict(data)
+
+    async def create(
+        self,
+        *,
+        name: str,
+        color: str | None = None,
+        **kwargs: Any,
+    ) -> PylonTag:
+        """Create a new tag asynchronously.
+
+        Args:
+            name: Tag name/value.
+            color: Hex color for the tag.
+            **kwargs: Additional fields.
+
+        Returns:
+            The created PylonTag instance.
+        """
+        data: dict[str, Any] = {"name": name, **kwargs}
+        if color:
+            data["hex_color"] = color
+        response = await self._post(self._endpoint, data=data)
+        result = response.get("data", response)
+        return PylonTag.from_pylon_dict(result)
 
