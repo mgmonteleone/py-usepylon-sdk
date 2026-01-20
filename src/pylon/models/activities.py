@@ -60,4 +60,3 @@ class PylonActivity(BaseModel):
             A PylonActivity instance.
         """
         return cls.model_validate(data)
-

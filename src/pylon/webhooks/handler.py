@@ -34,13 +34,13 @@ from pylon.exceptions import (
     PylonWebhookSignatureError,
     PylonWebhookTimestampError,
 )
-from pylon.webhooks.events import PylonWebhookEvent, parse_webhook_event
+from pylon.webhooks.events import parse_webhook_event
 
 if TYPE_CHECKING:
     pass
 
-# Type alias for event handlers
-EventHandler = Callable[[PylonWebhookEvent], Any]
+# Type alias for event handlers - uses Any for flexibility with specific event subtypes
+EventHandler = Callable[..., Any]
 
 # Default timestamp tolerance: 5 minutes
 DEFAULT_TIMESTAMP_TOLERANCE_SECONDS = 300

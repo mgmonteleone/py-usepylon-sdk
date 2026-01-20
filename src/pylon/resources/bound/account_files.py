@@ -38,4 +38,3 @@ class AccountFilesAsyncResource(BoundAsyncResource[PylonFile]):
     _resource_name = "files"
     _model = PylonFile
     _parser = PylonFile.from_pylon_dict
-

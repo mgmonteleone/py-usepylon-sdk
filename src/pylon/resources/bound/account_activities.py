@@ -38,4 +38,3 @@ class AccountActivitiesAsyncResource(BoundAsyncResource[PylonActivity]):
     _resource_name = "activities"
     _model = PylonActivity
     _parser = PylonActivity.from_pylon_dict
-

@@ -192,7 +192,9 @@ class BoundAsyncResource(ABC, Generic[T]):
         params: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Make an async POST request."""
-        return await self._transport.arequest("POST", endpoint, json=data, params=params)
+        return await self._transport.arequest(
+            "POST", endpoint, json=data, params=params
+        )
 
     def _parse_single(self, data: dict[str, Any]) -> T:
         """Parse a single entity from API response."""
@@ -269,4 +271,3 @@ class BoundAsyncResource(ABC, Generic[T]):
         """
         response = await self._post(self._base_path, data=kwargs)
         return self._parse_single(response)
-

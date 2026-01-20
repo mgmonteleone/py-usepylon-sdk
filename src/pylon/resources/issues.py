@@ -236,17 +236,21 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
                 {"field": "priority", "operator": "equals", "value": priority}
             )
         if created_after:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "gte",
-                "value": _format_datetime_utc(created_after),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "gte",
+                    "value": _format_datetime_utc(created_after),
+                }
+            )
         if created_before:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "lte",
-                "value": _format_datetime_utc(created_before),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "lte",
+                    "value": _format_datetime_utc(created_before),
+                }
+            )
         if assigned_to:
             filter_list.append(
                 {"field": "assignee", "operator": "equals", "value": assigned_to}
@@ -595,17 +599,21 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
                 {"field": "priority", "operator": "equals", "value": priority}
             )
         if created_after:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "gte",
-                "value": _format_datetime_utc(created_after),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "gte",
+                    "value": _format_datetime_utc(created_after),
+                }
+            )
         if created_before:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "lte",
-                "value": _format_datetime_utc(created_before),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "lte",
+                    "value": _format_datetime_utc(created_before),
+                }
+            )
         if assigned_to:
             filter_list.append(
                 {"field": "assignee", "operator": "equals", "value": assigned_to}

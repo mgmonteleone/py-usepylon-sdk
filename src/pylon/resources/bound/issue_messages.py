@@ -82,4 +82,3 @@ class IssueMessagesAsyncResource(BoundAsyncResource[PylonMessage]):
         data = {"content": content, "is_private": is_private, **kwargs}
         response = await self._post(self._base_path, data=data)
         return self._parse_single(response)
-
