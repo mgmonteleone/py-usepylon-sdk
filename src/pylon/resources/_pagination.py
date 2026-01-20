@@ -33,7 +33,7 @@ class SyncPaginator(Generic[T]):
             endpoint="/issues",
             model=PylonIssue,
         )
-        for issue in paginator:
+        for issue in paginator.iter():
             print(issue.title)
     """
 
@@ -65,19 +65,6 @@ class SyncPaginator(Generic[T]):
         self._parser = parser
         self._cursor: str | None = None
         self._exhausted = False
-
-    def __iter__(self) -> Iterator[T]:
-        """Return the iterator."""
-        return self
-
-    def __next__(self) -> T:
-        """Fetch and return the next item.
-
-        Raises:
-            StopIteration: When all items have been fetched.
-        """
-        # This is a simplified implementation - we'll buffer a page at a time
-        raise NotImplementedError("Use iter() method for proper iteration")
 
     def iter(self) -> Iterator[T]:
         """Iterate over all paginated results.
