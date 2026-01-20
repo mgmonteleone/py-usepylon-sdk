@@ -1,4 +1,4 @@
-/* Custom styles to match Augment documentation aesthetics */
+/* Custom styles to match Augment documentation aesthetics - Dark theme first */
 
 /* Primary color override to match Augment's green/teal */
 :root {
@@ -8,9 +8,53 @@
   --md-accent-fg-color: #3D855E;
 }
 
+/* Dark theme styling - matching Augment's black background design */
 [data-md-color-scheme="slate"] {
+  /* Core colors */
   --md-primary-fg-color: #4a9e6e;
   --md-accent-fg-color: #4a9e6e;
+
+  /* Background colors - pure black like Augment */
+  --md-default-bg-color: #0a0a0a;
+  --md-default-bg-color--light: #111111;
+  --md-default-bg-color--lighter: #1a1a1a;
+  --md-default-bg-color--lightest: #222222;
+
+  /* Text colors */
+  --md-default-fg-color: rgba(255, 255, 255, 0.87);
+  --md-default-fg-color--light: rgba(255, 255, 255, 0.54);
+  --md-default-fg-color--lighter: rgba(255, 255, 255, 0.32);
+  --md-default-fg-color--lightest: rgba(255, 255, 255, 0.12);
+
+  /* Code block background */
+  --md-code-bg-color: #141414;
+
+  /* Header */
+  --md-header-bg-color: #0a0a0a;
+}
+
+/* Dark sidebar background */
+[data-md-color-scheme="slate"] .md-sidebar {
+  background-color: #0a0a0a;
+}
+
+[data-md-color-scheme="slate"] .md-nav {
+  background-color: transparent;
+}
+
+/* Dark header */
+[data-md-color-scheme="slate"] .md-header {
+  background-color: #0a0a0a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Content area */
+[data-md-color-scheme="slate"] .md-main {
+  background-color: #0a0a0a;
+}
+
+[data-md-color-scheme="slate"] .md-content {
+  background-color: #0a0a0a;
 }
 
 /* Clean typography */
@@ -100,9 +144,23 @@
   border-left-width: 4px;
 }
 
+/* Dark theme admonitions */
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
+  background-color: #141414;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
 /* Cards and feature boxes */
 .md-typeset .grid {
   gap: 1rem;
+}
+
+/* Dark theme cards */
+[data-md-color-scheme="slate"] .md-typeset .grid > * {
+  background-color: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
 }
 
 /* Table styling */
@@ -115,7 +173,24 @@
   background-color: rgba(61, 133, 94, 0.1);
 }
 
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 [data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
   background-color: rgba(74, 158, 110, 0.15);
 }
 
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) td {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Dark search */
+[data-md-color-scheme="slate"] .md-search__form {
+  background-color: #1a1a1a;
+}
+
+/* Dark TOC */
+[data-md-color-scheme="slate"] .md-nav--secondary {
+  border-left-color: rgba(255, 255, 255, 0.08);
+}
