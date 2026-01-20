@@ -67,4 +67,3 @@ class PylonFile(BaseModel):
             A PylonFile instance.
         """
         return cls.model_validate(data)
-

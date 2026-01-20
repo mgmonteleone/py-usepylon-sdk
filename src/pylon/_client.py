@@ -118,8 +118,8 @@ class PylonClient:
             max_retries=max_retries,
         )
 
-        # Initialize resources
-        self._issues = IssuesResource(self._transport)
+        # Initialize resources (issues gets client reference for rich methods)
+        self._issues = IssuesResource(self._transport, client=self)
         self._accounts = AccountsResource(self._transport)
         self._attachments = AttachmentsResource(self._transport)
         self._audit_logs = AuditLogsResource(self._transport)
@@ -303,8 +303,8 @@ class AsyncPylonClient:
             max_retries=max_retries,
         )
 
-        # Initialize async resources
-        self._issues = AsyncIssuesResource(self._transport)
+        # Initialize async resources (issues gets client reference for rich methods)
+        self._issues = AsyncIssuesResource(self._transport, client=self)
         self._accounts = AsyncAccountsResource(self._transport)
         self._attachments = AsyncAttachmentsResource(self._transport)
         self._audit_logs = AsyncAuditLogsResource(self._transport)

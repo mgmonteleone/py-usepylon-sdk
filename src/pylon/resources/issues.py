@@ -16,6 +16,7 @@ from pylon.resources._base import BaseAsyncResource, BaseSyncResource
 from pylon.resources._pagination import AsyncPaginator, SyncPaginator
 
 if TYPE_CHECKING:
+    from pylon._client import AsyncPylonClient, PylonClient
     from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
 
 
@@ -51,22 +52,35 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
 
         # Get a specific issue
         issue = client.issues.get("issue_123")
+
+        # Rich methods (available on returned issues)
+        issue.resolve()
+        issue.add_message("Thanks for your feedback!")
     """
 
     _endpoint = "/issues"
     _model = PylonIssue
 
-    def __init__(self, transport: SyncHTTPTransport) -> None:
+    def __init__(
+        self,
+        transport: SyncHTTPTransport,
+        client: PylonClient | None = None,
+    ) -> None:
         """Initialize the issues resource.
 
         Args:
             transport: The HTTP transport to use for requests.
+            client: Optional client reference for rich model methods.
         """
         super().__init__(transport)
+        self._client = client
 
     def _inject_transport(self, issue: PylonIssue) -> PylonIssue:
-        """Inject transport into issue for sub-resource access."""
-        return issue._with_sync_transport(self._transport)
+        """Inject transport and client into issue for rich methods."""
+        issue._with_sync_transport(self._transport)
+        if self._client:
+            issue._bind_client(self._client)
+        return issue
 
     def list(
         self,
@@ -236,17 +250,21 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
                 {"field": "priority", "operator": "equals", "value": priority}
             )
         if created_after:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "gte",
-                "value": _format_datetime_utc(created_after),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "gte",
+                    "value": _format_datetime_utc(created_after),
+                }
+            )
         if created_before:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "lte",
-                "value": _format_datetime_utc(created_before),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "lte",
+                    "value": _format_datetime_utc(created_before),
+                }
+            )
         if assigned_to:
             filter_list.append(
                 {"field": "assignee", "operator": "equals", "value": assigned_to}
@@ -410,22 +428,35 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
 
             # Get a specific issue
             issue = await client.issues.get("issue_123")
+
+            # Rich methods (available on returned issues)
+            await issue.resolve()
+            await issue.add_message("Thanks for your feedback!")
     """
 
     _endpoint = "/issues"
     _model = PylonIssue
 
-    def __init__(self, transport: AsyncHTTPTransport) -> None:
+    def __init__(
+        self,
+        transport: AsyncHTTPTransport,
+        client: AsyncPylonClient | None = None,
+    ) -> None:
         """Initialize the async issues resource.
 
         Args:
             transport: The async HTTP transport to use for requests.
+            client: Optional client reference for rich model methods.
         """
         super().__init__(transport)
+        self._client = client
 
     def _inject_transport(self, issue: PylonIssue) -> PylonIssue:
-        """Inject transport into issue for sub-resource access."""
-        return issue._with_async_transport(self._transport)
+        """Inject transport and client into issue for rich methods."""
+        issue._with_async_transport(self._transport)
+        if self._client:
+            issue._bind_client(self._client)
+        return issue
 
     async def list(
         self,
@@ -595,17 +626,21 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
                 {"field": "priority", "operator": "equals", "value": priority}
             )
         if created_after:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "gte",
-                "value": _format_datetime_utc(created_after),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "gte",
+                    "value": _format_datetime_utc(created_after),
+                }
+            )
         if created_before:
-            filter_list.append({
-                "field": "created_at",
-                "operator": "lte",
-                "value": _format_datetime_utc(created_before),
-            })
+            filter_list.append(
+                {
+                    "field": "created_at",
+                    "operator": "lte",
+                    "value": _format_datetime_utc(created_before),
+                }
+            )
         if assigned_to:
             filter_list.append(
                 {"field": "assignee", "operator": "equals", "value": assigned_to}

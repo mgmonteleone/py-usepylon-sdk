@@ -38,4 +38,3 @@ class AccountHighlightsAsyncResource(BoundAsyncResource[PylonHighlight]):
     _resource_name = "highlights"
     _model = PylonHighlight
     _parser = PylonHighlight.from_pylon_dict
-

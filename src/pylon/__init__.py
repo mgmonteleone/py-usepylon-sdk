@@ -84,6 +84,7 @@ from pylon.models import (
     PylonTeamMember,
     PylonUser,
 )
+from pylon.models.base import ClientNotBoundError
 
 # Webhook events and handler
 from pylon.webhooks import (
@@ -118,6 +119,7 @@ __all__ = [
     "PylonWebhookError",
     "PylonWebhookSignatureError",
     "PylonWebhookTimestampError",
+    "ClientNotBoundError",
     # Base models
     "PylonReference",
     "PylonCustomFieldValue",
