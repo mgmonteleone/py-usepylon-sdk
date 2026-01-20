@@ -3,6 +3,11 @@
 This module provides a fluent API for building query filters that can
 be used with the Pylon API's search and list endpoints.
 
+Note:
+    The filter builder produces dictionary representations compatible with
+    Pylon's API filter format. Use `filter.to_dict()` to get the serialized
+    filter for API requests.
+
 Example:
     from pylon import filters
 
@@ -15,8 +20,9 @@ Example:
         filters.Field("created_at").after(datetime(2024, 1, 1))
     )
 
-    # Use with client
-    issues = client.issues.list(filter=filter)
+    # Serialize for API request
+    filter_dict = filter.to_dict()
+    # Use with your API calls as needed
 """
 
 from __future__ import annotations
@@ -212,7 +218,7 @@ class Field:
         Returns:
             A FieldFilter for the equality condition.
         """
-        return FieldFilter(self._name, "eq", value)
+        return FieldFilter(self._name, "equals", value)
 
     def neq(self, value: Any) -> FieldFilter:
         """Create a not-equal filter.
@@ -223,7 +229,7 @@ class Field:
         Returns:
             A FieldFilter for the inequality condition.
         """
-        return FieldFilter(self._name, "neq", value)
+        return FieldFilter(self._name, "not_equals", value)
 
     def in_(self, values: list[Any]) -> FieldFilter:
         """Create an 'in list' filter.
@@ -256,7 +262,7 @@ class Field:
         Returns:
             A FieldFilter for the greater-than condition.
         """
-        return FieldFilter(self._name, "gt", value)
+        return FieldFilter(self._name, "greater_than", value)
 
     def gte(self, value: Any) -> FieldFilter:
         """Create a greater-than-or-equal filter.
@@ -267,7 +273,7 @@ class Field:
         Returns:
             A FieldFilter for the greater-than-or-equal condition.
         """
-        return FieldFilter(self._name, "gte", value)
+        return FieldFilter(self._name, "greater_than_or_equals", value)
 
     def lt(self, value: Any) -> FieldFilter:
         """Create a less-than filter.
@@ -278,7 +284,7 @@ class Field:
         Returns:
             A FieldFilter for the less-than condition.
         """
-        return FieldFilter(self._name, "lt", value)
+        return FieldFilter(self._name, "less_than", value)
 
     def lte(self, value: Any) -> FieldFilter:
         """Create a less-than-or-equal filter.
@@ -289,7 +295,7 @@ class Field:
         Returns:
             A FieldFilter for the less-than-or-equal condition.
         """
-        return FieldFilter(self._name, "lte", value)
+        return FieldFilter(self._name, "less_than_or_equals", value)
 
     def contains(self, value: str) -> FieldFilter:
         """Create a contains filter (substring match).
@@ -333,7 +339,7 @@ class Field:
         Returns:
             A FieldFilter for the after condition.
         """
-        return FieldFilter(self._name, "gt", value.isoformat())
+        return FieldFilter(self._name, "greater_than", value.isoformat())
 
     def before(self, value: datetime) -> FieldFilter:
         """Create a 'before' filter for datetime fields.
@@ -344,7 +350,7 @@ class Field:
         Returns:
             A FieldFilter for the before condition.
         """
-        return FieldFilter(self._name, "lt", value.isoformat())
+        return FieldFilter(self._name, "less_than", value.isoformat())
 
     def between(self, start: datetime, end: datetime) -> And:
         """Create a 'between' filter for datetime fields.
@@ -354,11 +360,11 @@ class Field:
             end: The end datetime (inclusive).
 
         Returns:
-            An And filter combining gte and lte conditions.
+            An And filter combining greater_than_or_equals and less_than_or_equals conditions.
         """
         return And(
-            FieldFilter(self._name, "gte", start.isoformat()),
-            FieldFilter(self._name, "lte", end.isoformat()),
+            FieldFilter(self._name, "greater_than_or_equals", start.isoformat()),
+            FieldFilter(self._name, "less_than_or_equals", end.isoformat()),
         )
 
     def is_null(self) -> FieldFilter:

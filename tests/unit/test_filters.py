@@ -18,10 +18,10 @@ class TestFieldFilter:
 
     def test_to_dict_basic(self) -> None:
         """Test FieldFilter serializes correctly."""
-        f = FieldFilter("status", "eq", "open")
+        f = FieldFilter("status", "equals", "open")
         assert f.to_dict() == {
             "field": "status",
-            "operator": "eq",
+            "operator": "equals",
             "value": "open",
         }
 
@@ -43,7 +43,7 @@ class TestFieldBuilder:
         f = Field("state").eq("open")
         assert f.to_dict() == {
             "field": "state",
-            "operator": "eq",
+            "operator": "equals",
             "value": "open",
         }
 
@@ -52,7 +52,7 @@ class TestFieldBuilder:
         f = Field("state").neq("closed")
         assert f.to_dict() == {
             "field": "state",
-            "operator": "neq",
+            "operator": "not_equals",
             "value": "closed",
         }
 
@@ -79,7 +79,7 @@ class TestFieldBuilder:
         f = Field("priority").gt(3)
         assert f.to_dict() == {
             "field": "priority",
-            "operator": "gt",
+            "operator": "greater_than",
             "value": 3,
         }
 
@@ -88,7 +88,7 @@ class TestFieldBuilder:
         f = Field("priority").gte(3)
         assert f.to_dict() == {
             "field": "priority",
-            "operator": "gte",
+            "operator": "greater_than_or_equals",
             "value": 3,
         }
 
@@ -97,7 +97,7 @@ class TestFieldBuilder:
         f = Field("priority").lt(5)
         assert f.to_dict() == {
             "field": "priority",
-            "operator": "lt",
+            "operator": "less_than",
             "value": 5,
         }
 
@@ -106,7 +106,7 @@ class TestFieldBuilder:
         f = Field("priority").lte(5)
         assert f.to_dict() == {
             "field": "priority",
-            "operator": "lte",
+            "operator": "less_than_or_equals",
             "value": 5,
         }
 
@@ -143,7 +143,7 @@ class TestFieldBuilder:
         f = Field("created_at").after(dt)
         assert f.to_dict() == {
             "field": "created_at",
-            "operator": "gt",
+            "operator": "greater_than",
             "value": "2024-01-15T10:30:00",
         }
 
@@ -153,7 +153,7 @@ class TestFieldBuilder:
         f = Field("created_at").before(dt)
         assert f.to_dict() == {
             "field": "created_at",
-            "operator": "lt",
+            "operator": "less_than",
             "value": "2024-12-31T23:59:59",
         }
 
