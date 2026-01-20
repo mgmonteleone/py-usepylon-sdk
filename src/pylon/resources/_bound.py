@@ -94,10 +94,10 @@ class BoundSyncResource(ABC, Generic[T]):
         Yields:
             Parsed model instances.
         """
-        cursor = None
-        params: dict[str, Any] = {"limit": limit}
+        cursor: str | None = None
 
         while True:
+            params: dict[str, Any] = {"limit": limit}
             if cursor:
                 params["cursor"] = cursor
 
@@ -119,6 +119,9 @@ class BoundSyncResource(ABC, Generic[T]):
                 break
 
             cursor = pagination.cursor
+            # Guard against empty cursor with has_next_page=True (API edge case)
+            if not cursor:
+                break
 
     def get(self, resource_id: str) -> T:
         """Get a specific sub-resource by ID.
@@ -214,10 +217,10 @@ class BoundAsyncResource(ABC, Generic[T]):
         Yields:
             Parsed model instances.
         """
-        cursor = None
-        params: dict[str, Any] = {"limit": limit}
+        cursor: str | None = None
 
         while True:
+            params: dict[str, Any] = {"limit": limit}
             if cursor:
                 params["cursor"] = cursor
 
@@ -239,6 +242,9 @@ class BoundAsyncResource(ABC, Generic[T]):
                 break
 
             cursor = pagination.cursor
+            # Guard against empty cursor with has_next_page=True (API edge case)
+            if not cursor:
+                break
 
     async def get(self, resource_id: str) -> T:
         """Get a specific sub-resource by ID asynchronously.

@@ -7,7 +7,7 @@ Pylon Audit Logs API endpoint.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Iterator
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from pylon.models.audit_logs import PylonAuditLog
@@ -16,6 +16,23 @@ from pylon.resources._pagination import AsyncPaginator, SyncPaginator
 
 if TYPE_CHECKING:
     from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
+
+
+def _format_datetime_utc(dt: datetime) -> str:
+    """Format datetime as UTC ISO 8601 string.
+
+    Converts timezone-aware datetimes to UTC before formatting.
+    Naive datetimes are assumed to already be in UTC.
+
+    Args:
+        dt: The datetime to format.
+
+    Returns:
+        ISO 8601 formatted string with Z suffix (UTC).
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
@@ -83,9 +100,9 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
         if actor_id:
             params["actor_id"] = actor_id
         if created_after:
-            params["created_after"] = created_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["created_after"] = _format_datetime_utc(created_after)
         if created_before:
-            params["created_before"] = created_before.strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["created_before"] = _format_datetime_utc(created_before)
 
         response = self._get(f"{self._endpoint}/search", params=params)
         items = response.get("data", [])
@@ -168,9 +185,9 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
         if actor_id:
             params["actor_id"] = actor_id
         if created_after:
-            params["created_after"] = created_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["created_after"] = _format_datetime_utc(created_after)
         if created_before:
-            params["created_before"] = created_before.strftime("%Y-%m-%dT%H:%M:%SZ")
+            params["created_before"] = _format_datetime_utc(created_before)
 
         response = await self._get(f"{self._endpoint}/search", params=params)
         items = response.get("data", [])

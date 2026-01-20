@@ -19,6 +19,23 @@ if TYPE_CHECKING:
     from pylon._http import AsyncHTTPTransport, SyncHTTPTransport
 
 
+def _format_datetime_utc(dt: datetime) -> str:
+    """Format datetime as UTC ISO 8601 string.
+
+    Converts timezone-aware datetimes to UTC before formatting.
+    Naive datetimes are assumed to already be in UTC.
+
+    Args:
+        dt: The datetime to format.
+
+    Returns:
+        ISO 8601 formatted string with Z suffix (UTC).
+    """
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(UTC)
+    return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 class IssuesResource(BaseSyncResource[PylonIssue]):
     """Synchronous resource for managing Pylon issues.
 
@@ -222,13 +239,13 @@ class IssuesResource(BaseSyncResource[PylonIssue]):
             filter_list.append({
                 "field": "created_at",
                 "operator": "gte",
-                "value": created_after.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "value": _format_datetime_utc(created_after),
             })
         if created_before:
             filter_list.append({
                 "field": "created_at",
                 "operator": "lte",
-                "value": created_before.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "value": _format_datetime_utc(created_before),
             })
         if assigned_to:
             filter_list.append(
@@ -581,13 +598,13 @@ class AsyncIssuesResource(BaseAsyncResource[PylonIssue]):
             filter_list.append({
                 "field": "created_at",
                 "operator": "gte",
-                "value": created_after.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "value": _format_datetime_utc(created_after),
             })
         if created_before:
             filter_list.append({
                 "field": "created_at",
                 "operator": "lte",
-                "value": created_before.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "value": _format_datetime_utc(created_before),
             })
         if assigned_to:
             filter_list.append(
