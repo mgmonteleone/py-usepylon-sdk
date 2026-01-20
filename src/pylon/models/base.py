@@ -39,7 +39,8 @@ class ClientNotBoundError(PylonError):
         super().__init__(
             f"Cannot call {method_name}() on {model_name}: "
             "model is not bound to a client. "
-            "Use client.issues.get() or similar methods to retrieve the model."
+            "Retrieve the model using the appropriate client resource method "
+            "(e.g., client.issues.get(), client.accounts.get())."
         )
 
 
@@ -72,8 +73,10 @@ class RichModelMixin:
 
         if isinstance(client, PylonClient):
             self._sync_client = client
+            self._async_client = None  # Clear async to avoid context mismatch
         elif isinstance(client, AsyncPylonClient):
             self._async_client = client
+            self._sync_client = None  # Clear sync to avoid context mismatch
         return self
 
     def _ensure_client(self, method_name: str) -> None:
