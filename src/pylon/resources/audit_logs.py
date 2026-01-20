@@ -7,6 +7,7 @@ Pylon Audit Logs API endpoint.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Iterator
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from pylon.models.audit_logs import PylonAuditLog
@@ -55,6 +56,8 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
         action: str | None = None,
         resource_type: str | None = None,
         actor_id: str | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
         limit: int = 100,
         **kwargs: Any,
     ) -> Iterator[PylonAuditLog]:
@@ -64,6 +67,8 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
             action: Filter by action type.
             resource_type: Filter by resource type.
             actor_id: Filter by actor user ID.
+            created_after: Filter logs created after this datetime.
+            created_before: Filter logs created before this datetime.
             limit: Maximum number of results.
             **kwargs: Additional filter parameters.
 
@@ -77,6 +82,10 @@ class AuditLogsResource(BaseSyncResource[PylonAuditLog]):
             params["resource_type"] = resource_type
         if actor_id:
             params["actor_id"] = actor_id
+        if created_after:
+            params["created_after"] = created_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if created_before:
+            params["created_before"] = created_before.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         response = self._get(f"{self._endpoint}/search", params=params)
         items = response.get("data", [])
@@ -132,6 +141,8 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
         action: str | None = None,
         resource_type: str | None = None,
         actor_id: str | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
         limit: int = 100,
         **kwargs: Any,
     ) -> AsyncIterator[PylonAuditLog]:
@@ -141,6 +152,8 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
             action: Filter by action type.
             resource_type: Filter by resource type.
             actor_id: Filter by actor user ID.
+            created_after: Filter logs created after this datetime.
+            created_before: Filter logs created before this datetime.
             limit: Maximum number of results.
             **kwargs: Additional filter parameters.
 
@@ -154,6 +167,10 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
             params["resource_type"] = resource_type
         if actor_id:
             params["actor_id"] = actor_id
+        if created_after:
+            params["created_after"] = created_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if created_before:
+            params["created_before"] = created_before.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         response = await self._get(f"{self._endpoint}/search", params=params)
         items = response.get("data", [])

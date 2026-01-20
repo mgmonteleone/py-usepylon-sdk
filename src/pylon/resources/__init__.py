@@ -5,6 +5,7 @@ interacting with specific Pylon API endpoints.
 """
 
 from pylon.resources._base import BaseAsyncResource, BaseSyncResource
+from pylon.resources._bound import BoundAsyncResource, BoundSyncResource
 from pylon.resources._pagination import AsyncPaginator, SyncPaginator
 from pylon.resources.accounts import AccountsResource, AsyncAccountsResource
 from pylon.resources.attachments import (
@@ -12,6 +13,18 @@ from pylon.resources.attachments import (
     AttachmentsResource,
 )
 from pylon.resources.audit_logs import AsyncAuditLogsResource, AuditLogsResource
+from pylon.resources.bound import (
+    AccountActivitiesAsyncResource,
+    AccountActivitiesSyncResource,
+    AccountFilesAsyncResource,
+    AccountFilesSyncResource,
+    AccountHighlightsAsyncResource,
+    AccountHighlightsSyncResource,
+    IssueAttachmentsAsyncResource,
+    IssueAttachmentsSyncResource,
+    IssueMessagesAsyncResource,
+    IssueMessagesSyncResource,
+)
 from pylon.resources.contacts import AsyncContactsResource, ContactsResource
 from pylon.resources.custom_fields import (
     AsyncCustomFieldsResource,
@@ -36,9 +49,22 @@ __all__ = [
     # Base classes
     "BaseSyncResource",
     "BaseAsyncResource",
+    "BoundSyncResource",
+    "BoundAsyncResource",
     # Pagination
     "SyncPaginator",
     "AsyncPaginator",
+    # Bound resources (sub-resources)
+    "AccountActivitiesSyncResource",
+    "AccountActivitiesAsyncResource",
+    "AccountFilesSyncResource",
+    "AccountFilesAsyncResource",
+    "AccountHighlightsSyncResource",
+    "AccountHighlightsAsyncResource",
+    "IssueMessagesSyncResource",
+    "IssueMessagesAsyncResource",
+    "IssueAttachmentsSyncResource",
+    "IssueAttachmentsAsyncResource",
     # Sync resources
     "IssuesResource",
     "AccountsResource",
