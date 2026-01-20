@@ -67,4 +67,3 @@ class PylonCustomField(BaseModel):
             A PylonCustomField instance.
         """
         return cls.model_validate(data)
-

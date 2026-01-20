@@ -94,4 +94,3 @@ class PylonKnowledgeBaseArticle(BaseModel):
             A PylonKnowledgeBaseArticle instance.
         """
         return cls.model_validate(data)
-

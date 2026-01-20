@@ -31,12 +31,8 @@ class PylonAuditLog(BaseModel):
     id: str = Field(description="Unique identifier")
     action: str = Field(description="Action type")
     resource_type: str = Field(description="Type of resource affected")
-    resource_id: str | None = Field(
-        default=None, description="ID of affected resource"
-    )
-    actor: PylonReference | None = Field(
-        default=None, description="Reference to actor"
-    )
+    resource_id: str | None = Field(default=None, description="ID of affected resource")
+    actor: PylonReference | None = Field(default=None, description="Reference to actor")
     timestamp: datetime = Field(description="When action occurred")
     details: dict[str, Any] = Field(
         default_factory=dict, description="Additional details"
@@ -54,4 +50,3 @@ class PylonAuditLog(BaseModel):
             A PylonAuditLog instance.
         """
         return cls.model_validate(data)
-

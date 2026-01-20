@@ -45,4 +45,3 @@ class PylonMe(BaseModel):
             A PylonMe instance.
         """
         return cls.model_validate(data)
-

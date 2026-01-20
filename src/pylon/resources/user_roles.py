@@ -108,4 +108,3 @@ class AsyncUserRolesResource(BaseAsyncResource[PylonUserRole]):
         response = await self._get(f"{self._endpoint}/{role_id}")
         data = response.get("data", response)
         return PylonUserRole.from_pylon_dict(data)
-

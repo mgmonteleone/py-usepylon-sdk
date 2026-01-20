@@ -154,4 +154,3 @@ class AsyncProjectsResource(BaseAsyncResource[PylonProject]):
         response = await self._post(self._endpoint, data=data)
         result = response.get("data", response)
         return PylonProject.from_pylon_dict(result)
-

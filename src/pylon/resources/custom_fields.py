@@ -108,4 +108,3 @@ class AsyncCustomFieldsResource(BaseAsyncResource[PylonCustomField]):
         response = await self._get(f"{self._endpoint}/{custom_field_id}")
         data = response.get("data", response)
         return PylonCustomField.from_pylon_dict(data)
-

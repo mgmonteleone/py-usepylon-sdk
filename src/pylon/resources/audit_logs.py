@@ -168,4 +168,3 @@ class AsyncAuditLogsResource(BaseAsyncResource[PylonAuditLog]):
             items = response.get("data", [])
             for item in items:
                 yield PylonAuditLog.from_pylon_dict(item)
-

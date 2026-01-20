@@ -43,4 +43,3 @@ class PylonUserRole(BaseModel):
             A PylonUserRole instance.
         """
         return cls.model_validate(data)
-

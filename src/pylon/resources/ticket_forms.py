@@ -108,4 +108,3 @@ class AsyncTicketFormsResource(BaseAsyncResource[PylonTicketForm]):
         response = await self._get(f"{self._endpoint}/{form_id}")
         data = response.get("data", response)
         return PylonTicketForm.from_pylon_dict(data)
-
