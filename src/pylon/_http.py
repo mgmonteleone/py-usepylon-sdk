@@ -6,10 +6,19 @@ synchronous and asynchronous operations.
 
 from __future__ import annotations
 
+import asyncio
+import time
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
 import httpx
+from tenacity import (
+    AsyncRetrying,
+    Retrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from pylon.exceptions import (
     PylonAPIError,
@@ -134,6 +143,36 @@ class BaseHTTPTransport(ABC):
                 status_code=status_code, message=message, request_id=request_id
             )
 
+    def _should_retry(self, exception: Exception) -> bool:
+        """Determine if an exception should trigger a retry.
+
+        Args:
+            exception: The exception to check.
+
+        Returns:
+            True if the request should be retried, False otherwise.
+        """
+        # Retry on rate limit errors (429) and server errors (5xx)
+        return isinstance(exception, (PylonRateLimitError, PylonServerError))
+
+    def _wait_for_retry_after(self, exception: Exception) -> None:
+        """Wait for the duration specified in Retry-After header if present.
+
+        Args:
+            exception: The exception that may contain retry_after information.
+        """
+        if isinstance(exception, PylonRateLimitError) and exception.retry_after:
+            time.sleep(exception.retry_after)
+
+    async def _async_wait_for_retry_after(self, exception: Exception) -> None:
+        """Async wait for the duration specified in Retry-After header if present.
+
+        Args:
+            exception: The exception that may contain retry_after information.
+        """
+        if isinstance(exception, PylonRateLimitError) and exception.retry_after:
+            await asyncio.sleep(exception.retry_after)
+
     @abstractmethod
     def request(
         self,
@@ -205,7 +244,7 @@ class SyncHTTPTransport(BaseHTTPTransport):
         params: Mapping[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Make a synchronous HTTP request.
+        """Make a synchronous HTTP request with retry logic.
 
         Args:
             method: HTTP method (GET, POST, PATCH, DELETE).
@@ -217,18 +256,39 @@ class SyncHTTPTransport(BaseHTTPTransport):
             Parsed JSON response.
 
         Raises:
-            PylonAPIError: If the request fails.
+            PylonAPIError: If the request fails after all retries.
         """
         url = self._build_url(endpoint)
-        response = self._client.request(
-            method=method,
-            url=url,
-            params=params,
-            json=json,
-        )
-        self._handle_response_errors(response)
-        result: dict[str, Any] = response.json()
-        return result
+        last_exception: Exception | None = None
+
+        # Use tenacity for retry logic
+        for attempt in Retrying(
+            retry=retry_if_exception_type((PylonRateLimitError, PylonServerError)),
+            stop=stop_after_attempt(self.max_retries + 1),
+            wait=wait_exponential(multiplier=1, min=1, max=60),
+            reraise=True,
+        ):
+            with attempt:
+                try:
+                    response = self._client.request(
+                        method=method,
+                        url=url,
+                        params=params,
+                        json=json,
+                    )
+                    self._handle_response_errors(response)
+                    result: dict[str, Any] = response.json()
+                    return result
+                except (PylonRateLimitError, PylonServerError) as e:
+                    # Wait for Retry-After header if present
+                    self._wait_for_retry_after(e)
+                    last_exception = e
+                    raise
+
+        # This should never be reached due to reraise=True, but satisfies mypy
+        if last_exception:
+            raise last_exception
+        raise PylonAPIError(status_code=500, message="Request failed")
 
     def close(self) -> None:
         """Close the HTTP client."""
@@ -311,7 +371,7 @@ class AsyncHTTPTransport(BaseHTTPTransport):
         params: Mapping[str, Any] | None = None,
         json: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Make an asynchronous HTTP request.
+        """Make an asynchronous HTTP request with retry logic.
 
         Args:
             method: HTTP method (GET, POST, PATCH, DELETE).
@@ -323,18 +383,39 @@ class AsyncHTTPTransport(BaseHTTPTransport):
             Parsed JSON response.
 
         Raises:
-            PylonAPIError: If the request fails.
+            PylonAPIError: If the request fails after all retries.
         """
         url = self._build_url(endpoint)
-        response = await self._client.request(
-            method=method,
-            url=url,
-            params=params,
-            json=json,
-        )
-        self._handle_response_errors(response)
-        result: dict[str, Any] = response.json()
-        return result
+        last_exception: Exception | None = None
+
+        # Use tenacity for async retry logic
+        async for attempt in AsyncRetrying(
+            retry=retry_if_exception_type((PylonRateLimitError, PylonServerError)),
+            stop=stop_after_attempt(self.max_retries + 1),
+            wait=wait_exponential(multiplier=1, min=1, max=60),
+            reraise=True,
+        ):
+            with attempt:
+                try:
+                    response = await self._client.request(
+                        method=method,
+                        url=url,
+                        params=params,
+                        json=json,
+                    )
+                    self._handle_response_errors(response)
+                    result: dict[str, Any] = response.json()
+                    return result
+                except (PylonRateLimitError, PylonServerError) as e:
+                    # Wait for Retry-After header if present
+                    await self._async_wait_for_retry_after(e)
+                    last_exception = e
+                    raise
+
+        # This should never be reached due to reraise=True, but satisfies mypy
+        if last_exception:
+            raise last_exception
+        raise PylonAPIError(status_code=500, message="Request failed")
 
     def close(self) -> None:
         """Synchronous close is not supported for async transport.
